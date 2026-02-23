@@ -11,3 +11,7 @@ Repository skeleton for the Real-Time Cloud Billing Anomaly Detection project.
 - `infra/` deployment and infrastructure assets
 - `docs/` architecture, API, testing, and runbooks
 - `tests/` cross-service test suites
+
+## Team Standards
+
+- Contribution and coding standards: `CONTRIBUTING.md`

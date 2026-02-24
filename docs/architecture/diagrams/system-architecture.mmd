@@ -1,0 +1,11 @@
+flowchart LR
+  A[Synthetic Generator] --> B[Ingestion API]
+  B --> C[Stream Broker]
+  C --> D[Detection Service]
+  D --> E[(PostgreSQL)]
+  D --> F[(Redis)]
+  D --> G[Alert Service]
+  G --> H[In-App Alerts]
+  G --> I[Email Alerts]
+  E --> J[Backend API]
+  J --> K[Web Dashboard]

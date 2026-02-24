@@ -1,0 +1,10 @@
+flowchart TD
+  A[Windowed Account Data] --> B[Time-Series Score]
+  A --> C[Isolation Forest Score]
+  A --> D[Rule Score]
+  B --> E[Weighted Fusion]
+  C --> E
+  D --> E
+  E --> F[Severity + Explanation]
+  F --> G[Persist Anomaly]
+  F --> H[Trigger Alerts]

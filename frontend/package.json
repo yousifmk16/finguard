@@ -1,0 +1,10 @@
+{
+  "name": "finguard-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node -e \"console.log('Frontend skeleton running on port 3000'); setInterval(()=>{}, 1<<30)\"",
+    "lint": "node -e \"console.log('frontend lint placeholder passed')\"",
+    "test": "node -e \"console.log('frontend test placeholder passed')\""
+  }
+}

@@ -1,0 +1,20 @@
+TASK-ID Deliverable
+Task: <task title>
+Repository: finguard
+Status: Done
+Owner: <owner>
+Verified by: <reviewer>
+Date: [Fill Date]
+
+1) Files Added/Updated
+- `<path>`
+
+2) What Was Implemented
+- 
+
+3) Acceptance Checklist
+- [x] 
+- [x] 
+
+4) Next Task
+- <next task id>

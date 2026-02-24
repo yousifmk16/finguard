@@ -1,0 +1,23 @@
+SKL-17 Deliverable
+Task: Add API contract placeholder files
+Repository: finguard
+Status: Done
+Owner: M1
+Verified by: M2
+Date: [Fill Date]
+
+1) Files Added
+- `finguard/docs/api/api-contracts.md`
+- `finguard/docs/api/openapi-placeholder.yaml`
+
+2) What Was Implemented
+- Draft endpoint list and sample anomaly payload contract.
+- Minimal OpenAPI placeholder scaffold for baseline documentation.
+
+3) Acceptance Checklist
+- [x] API contract markdown exists
+- [x] OpenAPI placeholder exists
+- [x] Placeholder is aligned with backend skeleton conventions
+
+4) Next Task
+- SKL-18: Data schema placeholder files

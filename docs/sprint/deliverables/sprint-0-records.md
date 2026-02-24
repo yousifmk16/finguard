@@ -23,4 +23,4 @@ All Sprint 0 skeleton tasks are complete and pushed to `main`.
 | SKL-17 API contract placeholders | done | M1 | `docs/api/api-contracts.md`, `docs/api/openapi-placeholder.yaml` |
 | SKL-18 Data schema placeholders | done | M3 | `docs/requirements/data-schema.md`, `docs/requirements/requirements-spec.md` |
 | SKL-19 Test plan placeholders | done | M5 | `docs/testing/test-plan.md` |
-| SKL-20 Sprint board and backlog | done | M1 | `docs/sprint/sprint-0-board.md`, `docs/sprint/product-backlog.md`, `docs/sprint/run-1-closure-checklist.md` |
+| SKL-20 Sprint board and backlog | done | M1 | `docs/sprint/sprint-0-board.md`, `docs/sprint/product-backlog.md`, `docs/sprint/sprint-0-closure-checklist.md` |

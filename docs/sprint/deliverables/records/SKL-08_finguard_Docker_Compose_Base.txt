@@ -1,0 +1,23 @@
+SKL-08 Deliverable
+Task: Add Docker Compose base file
+Repository: finguard
+Status: Done
+Owner: M5
+Verified by: M1
+Date: [Fill Date]
+
+1) Files Added
+- `finguard/infra/docker/docker-compose.yml`
+- `finguard/infra/docker/README.md`
+
+2) What Was Implemented
+- Base compose orchestration for `backend`, `frontend`, `postgres`, `redis`, and `broker`.
+- Service startup documentation for skeleton stage.
+
+3) Acceptance Checklist
+- [x] Compose file exists and is valid skeleton
+- [x] Core service network is defined
+- [x] Run instructions are documented
+
+4) Next Task
+- SKL-09: Backend service container skeleton

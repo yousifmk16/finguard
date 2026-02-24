@@ -1,0 +1,37 @@
+SKL-06 Deliverable
+Task: Setup Python environment management
+Repository: finguard
+Status: Done
+Owner: M5
+Verified by: M1
+Date: [Fill Date]
+
+1) Files Added
+- `finguard/backend/requirements.txt`
+- `finguard/backend/pyproject.toml`
+- `finguard/backend/.python-version`
+- `finguard/backend/.env.example`
+- `finguard/backend/scripts/setup_env.ps1`
+- `finguard/backend/scripts/setup_env.sh`
+- `finguard/docs/runbooks/python-environment.md`
+
+2) File Updated
+- `finguard/README.md`
+
+3) What Was Implemented
+- Python version baseline (`3.11`) added.
+- Runtime and development dependency files in place.
+- One-command setup scripts for Windows PowerShell and Linux/macOS.
+- Backend environment variable template added.
+- Runbook added with setup, verification, and troubleshooting entry points.
+- README updated to point to active backend setup flow.
+
+4) Acceptance Checklist
+- [x] Python environment setup is reproducible
+- [x] Dependency sources are defined
+- [x] Local env template is present
+- [x] Setup instructions are documented
+- [x] Team can bootstrap backend consistently
+
+5) Next Logical Task
+- SKL-07: setup Node environment management for frontend

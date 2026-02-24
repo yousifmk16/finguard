@@ -1,0 +1,25 @@
+SKL-07 Deliverable
+Task: Setup Node environment management
+Repository: finguard
+Status: Done
+Owner: M5
+Verified by: M1
+Date: [Fill Date]
+
+1) Files Added
+- `finguard/frontend/.nvmrc`
+- `finguard/frontend/package.json`
+- `finguard/docs/runbooks/node-environment.md`
+
+2) What Was Implemented
+- Node version baseline defined (`20`).
+- Frontend package manifest created with placeholder scripts (`dev`, `lint`, `test`).
+- Runbook added for local setup and verification commands.
+
+3) Acceptance Checklist
+- [x] Node version is pinned for team consistency
+- [x] Frontend scripts exist for CI placeholder flow
+- [x] Node setup instructions are documented
+
+4) Next Task
+- SKL-08: Docker Compose base file

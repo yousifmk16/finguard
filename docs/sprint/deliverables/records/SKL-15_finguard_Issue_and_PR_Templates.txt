@@ -1,0 +1,26 @@
+SKL-15 Deliverable
+Task: Add issue templates and PR template
+Repository: finguard
+Status: Done
+Owner: M1
+Verified by: M5
+Date: [Fill Date]
+
+1) Files Added
+- `finguard/.github/PULL_REQUEST_TEMPLATE.md`
+- `finguard/.github/ISSUE_TEMPLATE/bug_report.md`
+- `finguard/.github/ISSUE_TEMPLATE/feature_request.md`
+
+2) What Was Implemented
+- Standard PR checklist structure for summary, tests, docs, and linked task.
+- Bug report template for reproducible defect reporting.
+- Feature request template using user story and acceptance criteria format.
+
+3) Acceptance Checklist
+- [x] PR template exists
+- [x] Bug issue template exists
+- [x] Feature request template exists
+- [x] Templates support Agile sprint workflow
+
+4) Next Task
+- SKL-16: Architecture diagram placeholder files

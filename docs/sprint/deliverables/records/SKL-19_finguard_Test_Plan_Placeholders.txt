@@ -1,0 +1,23 @@
+SKL-19 Deliverable
+Task: Add test plan placeholder files
+Repository: finguard
+Status: Done
+Owner: M5
+Verified by: M1
+Date: [Fill Date]
+
+1) Files Added
+- `finguard/docs/testing/test-plan.md`
+- `finguard/backend/tests/test_health.py`
+
+2) What Was Implemented
+- Baseline testing strategy document (unit, integration, contract, performance).
+- Initial backend health endpoint test for CI verification.
+
+3) Acceptance Checklist
+- [x] Test plan placeholder exists
+- [x] At least one runnable test exists
+- [x] CI pipeline can exercise backend test path
+
+4) Next Task
+- SKL-20: Sprint board and backlog file

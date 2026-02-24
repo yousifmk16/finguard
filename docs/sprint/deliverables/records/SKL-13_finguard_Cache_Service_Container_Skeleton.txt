@@ -1,0 +1,23 @@
+SKL-13 Deliverable
+Task: Add cache service container skeleton
+Repository: finguard
+Status: Done
+Owner: M5
+Verified by: M1
+Date: [Fill Date]
+
+1) File Updated
+- `finguard/infra/docker/docker-compose.yml`
+
+2) What Was Implemented
+- Added `redis` service skeleton.
+- Exposed Redis port (`6379`) for local use.
+- Included cache dependency in backend service chain.
+
+3) Acceptance Checklist
+- [x] Cache service is declared in compose
+- [x] Cache port mapping is defined
+- [x] Backend dependency includes cache service
+
+4) Next Task
+- SKL-14: CI pipeline skeleton

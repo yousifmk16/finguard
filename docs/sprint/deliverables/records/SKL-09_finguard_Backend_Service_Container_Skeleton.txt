@@ -1,0 +1,27 @@
+SKL-09 Deliverable
+Task: Add backend service container skeleton
+Repository: finguard
+Status: Done
+Owner: M5
+Verified by: M2
+Date: [Fill Date]
+
+1) Files Added
+- `finguard/backend/Dockerfile`
+- `finguard/backend/app/main.py`
+- `finguard/backend/app/__init__.py`
+- `finguard/backend/tests/test_health.py`
+
+2) What Was Implemented
+- Python backend container image definition.
+- Minimal FastAPI app with `/health` endpoint.
+- Minimal backend test to validate health route.
+
+3) Acceptance Checklist
+- [x] Backend Dockerfile exists
+- [x] Container command starts backend service
+- [x] Health endpoint exists
+- [x] Basic backend test exists
+
+4) Next Task
+- SKL-10: Frontend service container skeleton

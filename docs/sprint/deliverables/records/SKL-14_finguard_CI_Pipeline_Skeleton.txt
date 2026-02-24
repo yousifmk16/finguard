@@ -1,0 +1,41 @@
+SKL-14 Deliverable
+Task: Add CI pipeline skeleton (lint and test placeholders)
+Repository: finguard
+Status: Done
+Owner: M5
+Verified by: M1
+Date: [Fill Date]
+
+1) File Added
+- `finguard/.github/workflows/ci.yml`
+
+2) What the CI workflow does
+- Triggers on push and pull_request for `main` and `develop`.
+- Runs two jobs in parallel:
+  - `backend`: Python setup, lint, and test placeholders.
+  - `frontend`: Node setup, lint, and test placeholders.
+
+3) Placeholder-safe behavior
+- Backend:
+  - Installs `backend/requirements-dev.txt` if present; otherwise installs `ruff` and `pytest`.
+  - Runs `ruff` if `backend/ruff.toml` exists.
+  - Runs tests only if files exist under `backend/tests`.
+- Frontend:
+  - Installs dependencies only if `frontend/package.json` exists.
+  - Runs lint only if a `lint` script exists.
+  - Runs tests only if a `test` script exists.
+
+4) Why this matches SKL-14
+- Provides CI structure now, even before full implementation.
+- Prevents false failures while services are still skeleton-only.
+- Ready to be hardened as real code and tests are added.
+
+5) Acceptance Checklist
+- [x] CI workflow file exists
+- [x] Lint placeholders included for backend/frontend
+- [x] Test placeholders included for backend/frontend
+- [x] Runs on PR and push events
+- [x] Supports parallel team development safely
+
+6) Next Immediate Task
+- DAT-01: implement synthetic data generator core

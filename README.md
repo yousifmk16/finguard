@@ -86,7 +86,7 @@ ruff check backend/app backend/tests
 
 - GitHub Actions workflow: `.github/workflows/ci.yml`
 
-## Run 1 Artifacts
+## Sprint 0 Artifacts
 
 - Requirements: `docs/requirements/requirements-spec.md`
 - Architecture: `docs/architecture/architecture-overview.md`

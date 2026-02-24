@@ -1,0 +1,75 @@
+SKL-02 Deliverable
+Task: Create folder skeleton (backend, frontend, ml, data, infra, docs, tests)
+Repository: finguard
+Status: Done
+Owner: M5
+Verified by: M1
+Date: [Fill Date]
+
+1) Implemented Skeleton Structure
+
+finguard/
+  backend/
+    app/
+      api/
+      core/
+      models/
+      schemas/
+      services/
+      workers/
+    tests/
+
+  frontend/
+    public/
+    src/
+      app/
+      components/
+      features/
+      lib/
+      styles/
+
+  ml/
+    artifacts/
+    notebooks/
+    src/
+      evaluation/
+      features/
+      models/
+      training/
+
+  data/
+    processed/
+    samples/
+    synthetic/
+
+  infra/
+    docker/
+    k8s/
+    scripts/
+
+  docs/
+    api/
+    architecture/
+    runbooks/
+    sprint/
+    testing/
+
+  tests/
+    e2e/
+    integration/
+    performance/
+
+2) Notes
+- `.gitkeep` files were added in leaf directories to preserve empty folders in git.
+- Root `README.md` added to describe top-level structure.
+
+3) SKL-02 Acceptance Checklist
+- [x] Required top-level folders created
+- [x] Core subfolders created per domain
+- [x] Skeleton is compatible with parallel Agile team development
+- [x] Ready for SKL-03, SKL-04, and SKL-14 tasks
+
+4) Next Immediate Tasks
+- SKL-03: naming conventions and coding standards
+- SKL-04: .gitignore, editorconfig, lint placeholders
+- SKL-14: CI pipeline placeholders (lint/tests)

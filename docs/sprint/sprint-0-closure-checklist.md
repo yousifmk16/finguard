@@ -1,4 +1,4 @@
-# Run 1 Closure Checklist
+# Sprint 0 Closure Checklist
 
 ## Foundation
 

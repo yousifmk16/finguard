@@ -1,0 +1,23 @@
+SKL-10 Deliverable
+Task: Add frontend service container skeleton
+Repository: finguard
+Status: Done
+Owner: M5
+Verified by: M4
+Date: [Fill Date]
+
+1) Files Added
+- `finguard/frontend/Dockerfile`
+- `finguard/frontend/package.json`
+
+2) What Was Implemented
+- Node frontend container image definition.
+- Placeholder frontend scripts for sprint-0 validation (`dev`, `lint`, `test`).
+
+3) Acceptance Checklist
+- [x] Frontend Dockerfile exists
+- [x] Frontend package scripts exist
+- [x] Service can be launched by compose skeleton
+
+4) Next Task
+- SKL-11: Database service container skeleton

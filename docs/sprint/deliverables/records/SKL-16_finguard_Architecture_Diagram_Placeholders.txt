@@ -1,0 +1,25 @@
+SKL-16 Deliverable
+Task: Add architecture diagram placeholder files
+Repository: finguard
+Status: Done
+Owner: M2
+Verified by: M1
+Date: [Fill Date]
+
+1) Files Added
+- `finguard/docs/architecture/architecture-overview.md`
+- `finguard/docs/architecture/diagrams/system-architecture.mmd`
+- `finguard/docs/architecture/diagrams/detection-flow.mmd`
+
+2) What Was Implemented
+- High-level architecture description document.
+- Mermaid placeholder diagram for system component interactions.
+- Mermaid placeholder diagram for detection pipeline flow.
+
+3) Acceptance Checklist
+- [x] Architecture overview file exists
+- [x] System architecture diagram placeholder exists
+- [x] Detection flow diagram placeholder exists
+
+4) Next Task
+- SKL-17: API contract placeholder files

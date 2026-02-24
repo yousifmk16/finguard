@@ -1,0 +1,30 @@
+SKL-04 Deliverable
+Task: Add .gitignore, .editorconfig, and lint config placeholders
+Repository: finguard
+Status: Done
+Owner: M5
+Verified by: M1
+Date: [Fill Date]
+
+1) Files Added
+- `finguard/.gitignore`
+- `finguard/.editorconfig`
+- `finguard/backend/ruff.toml`
+- `finguard/frontend/.eslintrc.json`
+
+2) What Was Configured
+- Ignore patterns for OS/editor junk, secrets, logs, Python caches, Node build outputs, and test artifacts.
+- Keep tracked placeholders for `data/processed/.gitkeep` and `ml/artifacts/.gitkeep`.
+- Standard editor behavior (UTF-8, LF, final newline, trim trailing whitespace, per-language indentation).
+- Backend lint placeholder using Ruff defaults suitable for Python service modules.
+- Frontend lint placeholder using ESLint base JSON config.
+
+3) Acceptance Checklist
+- [x] `.gitignore` exists and covers core project outputs
+- [x] `.editorconfig` exists with repo-wide defaults
+- [x] Python lint placeholder exists
+- [x] Frontend lint placeholder exists
+- [x] Ready for SKL-14 CI lint/test pipeline wiring
+
+4) Next Immediate Task
+- SKL-14: add CI workflow to run lint and tests on pull requests

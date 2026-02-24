@@ -15,3 +15,7 @@ Repository skeleton for the Real-Time Cloud Billing Anomaly Detection project.
 ## Team Standards
 
 - Contribution and coding standards: `CONTRIBUTING.md`
+
+## CI
+
+- GitHub Actions workflow: `.github/workflows/ci.yml`

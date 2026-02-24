@@ -1,32 +1,10 @@
-# Architecture Overview (Run 1)
+# Architecture Overview
 
-## Selected Style
+Primary baseline document:
 
-Event-driven services with clear boundaries:
+- `docs/architecture/sprint-1-architecture-baseline.md`
 
-- ingestion
-- normalization
-- detection
-- alerting
-- API/dashboard
+Related architecture artifacts:
 
-## Core Components
-
-- Synthetic data generator
-- Ingestion API + stream broker
-- Detection engine (TS + IF + rules)
-- Alert service (in-app + email)
-- PostgreSQL/Timescale + Redis
-- Web dashboard
-
-## Core Event Schema (v1)
-
-- event_id
-- timestamp
-- provider
-- account_id
-- service
-- region
-- cost_amount
-- usage_amount
-- usage_unit
+- `docs/architecture/diagrams/system-architecture.mmd`
+- `docs/architecture/diagrams/detection-flow.mmd`

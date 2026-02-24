@@ -1,4 +1,4 @@
-# Data Schema Placeholder (Sprint 0)
+# Data Schema (v1)
 
 ## Canonical Billing Event (v1)
 
@@ -38,3 +38,8 @@
   "status": "new"
 }
 ```
+
+## Notes
+
+- Canonical schema is provider-agnostic with AWS-first values.
+- This file is the source reference for ARC-04 and ARC-05.

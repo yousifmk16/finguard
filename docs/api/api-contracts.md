@@ -1,4 +1,4 @@
-# API Contracts (Run 1 Placeholder)
+# API Contracts
 
 ## Endpoints
 
@@ -8,7 +8,11 @@
 - `GET /api/v1/alerts`
 - `GET /api/v1/kpis`
 
-## Anomaly Response (draft)
+## Health
+
+- `GET /health`
+
+## Anomaly Response (v1 draft)
 
 ```json
 {
@@ -25,3 +29,17 @@
   "explanation": "Cost exceeded expected baseline with rule trigger"
 }
 ```
+
+## Status Update Request (v1 draft)
+
+```json
+{
+  "status": "acknowledged",
+  "note": "Investigated by analyst"
+}
+```
+
+## Notes
+
+- This contract aligns with `docs/architecture/sprint-1-architecture-baseline.md`.
+- OpenAPI scaffold: `docs/api/openapi-placeholder.yaml`.

@@ -1,6 +1,6 @@
-# Product Backlog (Run 1 Snapshot)
+# Product Backlog Snapshot
 
-## Sprint 0 / 1 Completed Foundations
+## Completed
 
 - Repository and branch policy
 - Folder skeleton
@@ -11,6 +11,7 @@
 - Docker Compose baseline with service skeletons
 - PR/issue templates and sprint board
 - Requirements/architecture/API/testing placeholder docs
+- Sprint 1 requirements and architecture baseline (REQ-01 to ARC-08)
 
 ## Next Ready Stories
 

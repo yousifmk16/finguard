@@ -94,6 +94,8 @@ ruff check backend/app backend/tests
 - Python runbook: `docs/runbooks/python-environment.md`
 - Node runbook: `docs/runbooks/node-environment.md`
 - Sprint 0 board: `docs/sprint/sprint-0-board.md`
+- Sprint 1 board: `docs/sprint/sprint-1-board.md`
+- Deliverable records index: `docs/sprint/deliverables/index.md`
 
 ## Contribution
 

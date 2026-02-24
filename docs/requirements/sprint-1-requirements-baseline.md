@@ -7,7 +7,7 @@ Cloud billing anomalies (misconfiguration spikes, accidental over-provisioning, 
 ## REQ-02 Scope Boundaries
 
 ### In Scope
-- AWS-first canonical billing event pipeline with multi-cloud-ready schema.
+- Multi-cloud canonical billing event pipeline with GCP-priority defaults.
 - Synthetic data generation with labeled anomaly scenarios.
 - Near-real-time anomaly detection and explainable scoring.
 - Web dashboard + in-app/email alerts.

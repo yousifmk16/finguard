@@ -35,7 +35,7 @@ Reason:
 {
   "event_id": "uuid",
   "timestamp": "ISO-8601",
-  "provider": "aws",
+  "provider": "gcp",
   "account_id": "string",
   "service": "string",
   "region": "string",
@@ -96,3 +96,7 @@ Reason:
 - Managed Postgres and Redis.
 - Managed message broker (Kafka-compatible).
 - Centralized logs/metrics and secret store.
+
+Provider strategy:
+- GCP-priority rollout for first real integration.
+- Keep adapter interfaces provider-agnostic for AWS and Azure extensions.

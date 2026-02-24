@@ -6,10 +6,10 @@
 {
   "event_id": "uuid",
   "timestamp": "2026-01-01T00:00:00Z",
-  "provider": "aws",
+  "provider": "gcp",
   "account_id": "string",
-  "service": "EC2",
-  "region": "us-east-1",
+  "service": "Compute Engine",
+  "region": "us-central1",
   "cost_amount": 12.34,
   "usage_amount": 10.0,
   "usage_unit": "Hrs",
@@ -41,5 +41,5 @@
 
 ## Notes
 
-- Canonical schema is provider-agnostic with AWS-first values.
+- Canonical schema is provider-agnostic with GCP-priority example values.
 - This file is the source reference for ARC-04 and ARC-05.

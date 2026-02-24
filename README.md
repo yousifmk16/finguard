@@ -7,6 +7,8 @@ Repository skeleton for the Real-Time Cloud Billing Anomaly Detection project.
 Build a real-time cloud billing anomaly detection platform with explainable alerts,
 web dashboard visibility, and in-app/email notifications.
 
+Cloud strategy: multi-cloud architecture with GCP-priority defaults.
+
 ## Current Stage
 
 Skeleton and engineering foundations are in place. Core features (data generator,

@@ -108,6 +108,10 @@ ruff check backend/app backend/tests
 
 - Proposed module map with owners and sprint mapping: `MODULES.md`
 
+## AI Agent Guide
+
+- Project-specific AI coding instructions: `AGENTS.md`
+
 ## Notes
 
 Frontend and Docker sections are placeholders for the current project stage.

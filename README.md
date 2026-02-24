@@ -104,6 +104,10 @@ ruff check backend/app backend/tests
 - Standards and branch workflow: `CONTRIBUTING.md`
 - PR template: `.github/PULL_REQUEST_TEMPLATE.md`
 
+## Modules
+
+- Proposed module map with owners and sprint mapping: `MODULES.md`
+
 ## Notes
 
 Frontend and Docker sections are placeholders for the current project stage.

@@ -1,0 +1,22 @@
+TASK-ID Deliverable
+Task: UX-04 Produce login/role flow wireframe
+Repository: finguard
+Status: Done
+Owner: M4
+Verified by: Codex
+Date: 2026-04-09
+
+1) Files Added/Updated
+- `docs/ux/wireframes.md`
+- `docs/sprint/deliverables/index.md`
+
+2) What Was Implemented
+- Added a low-fidelity login and role-resolution flow covering sign-in, JWT session guard behavior, Analyst/Admin landing differences, and unauthorized access handling.
+- Anchored the flow in the RBAC and audit requirements already defined in the architecture baseline.
+
+3) Acceptance Checklist
+- [x] Login and role flow wireframe supports secure entry and role-aware navigation.
+- [x] Design references align with FR-01, REQ-03, and ARC-07.
+
+4) Next Task
+- DAT-01

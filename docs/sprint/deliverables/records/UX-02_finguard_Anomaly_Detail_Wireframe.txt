@@ -1,0 +1,22 @@
+TASK-ID Deliverable
+Task: UX-02 Produce anomaly detail wireframe
+Repository: finguard
+Status: Done
+Owner: M4
+Verified by: Codex
+Date: 2026-04-09
+
+1) Files Added/Updated
+- `docs/ux/wireframes.md`
+- `docs/sprint/deliverables/index.md`
+
+2) What Was Implemented
+- Added a low-fidelity anomaly detail wireframe with score breakdown, explanation, evidence fields, related alerts, and lifecycle controls.
+- Connected the design to status transition and explainability requirements in the baseline docs.
+
+3) Acceptance Checklist
+- [x] Detail wireframe supports anomaly investigation and status updates.
+- [x] Design references align with FR-06, FR-08, REQ-09, and anomaly detail API usage.
+
+4) Next Task
+- UX-03

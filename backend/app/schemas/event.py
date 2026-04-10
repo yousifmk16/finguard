@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -21,8 +22,8 @@ class BillingEvent(BaseModel):
     account_id: str
     service: str
     region: str
-    cost_amount: float = Field(ge=0.0)
-    usage_amount: float = Field(ge=0.0)
+    cost_amount: Decimal = Field(ge=0, decimal_places=6)
+    usage_amount: Decimal = Field(ge=0, decimal_places=6)
     usage_unit: str
     tags: dict[str, str] = Field(default_factory=dict)
     source_type: Literal["synthetic", "live"] = "synthetic"

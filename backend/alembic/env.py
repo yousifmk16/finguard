@@ -13,7 +13,13 @@ config = context.config
 fileConfig(config.config_file_name)
 
 # Pull DATABASE_URL from the environment — never hard-coded.
-database_url = os.environ["DATABASE_URL"]
+database_url = os.environ.get("DATABASE_URL")
+if not database_url:
+    raise RuntimeError(
+        "DATABASE_URL environment variable is not set. "
+        "Copy backend/.env.example to backend/.env and set it, "
+        "or export it in your shell."
+    )
 config.set_main_option("sqlalchemy.url", database_url)
 
 target_metadata = Base.metadata

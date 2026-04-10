@@ -1,0 +1,76 @@
+{
+  "seed": 42,
+  "n": 240,
+  "start_time": "2026-01-01T00:00:00Z",
+  "frequency": "1H",
+  "provider": "gcp",
+  "source_type": "synthetic",
+  "accounts": ["acct-prod-1", "acct-prod-2", "acct-dev-1"],
+  "services": ["Compute Engine", "Cloud Storage", "BigQuery"],
+  "regions": ["us-central1", "us-east1", "europe-west1"],
+  "usage_units": ["vCPU-hour", "GB-month", "slot-hour"],
+  "baseline": {
+    "default": 120.0,
+    "by_account": {
+      "acct-prod-1": 180.0,
+      "acct-prod-2": 140.0,
+      "acct-dev-1": 70.0
+    }
+  },
+  "trend": {
+    "enabled": true,
+    "slope": 0.0015
+  },
+  "seasonality": {
+    "daily": {
+      "enabled": true,
+      "amplitude": 0.15
+    },
+    "weekly": {
+      "enabled": true,
+      "amplitude": 0.08
+    }
+  },
+  "noise": {
+    "model": "gaussian",
+    "sigma": 7.5
+  },
+  "usage": {
+    "mean": 130.0,
+    "std": 12.0
+  },
+  "tags": {
+    "enabled": true,
+    "base": {
+      "team": "finops"
+    },
+    "options": {
+      "env": ["prod", "staging", "dev"],
+      "owner": ["billing", "platform", "analytics"]
+    }
+  },
+  "anomaly_injectors": {
+    "spike": {
+      "enabled": true,
+      "count": 6,
+      "multiplier": 2.8
+    },
+    "drift": {
+      "enabled": true,
+      "start_index": 120,
+      "slope": 0.003
+    },
+    "level_shift": {
+      "enabled": true,
+      "start_index": 180,
+      "shift": 40.0
+    },
+    "budget_breach": {
+      "enabled": true,
+      "start_index": 200,
+      "duration": 10,
+      "budget_threshold": 220.0,
+      "breach_multiplier": 1.1
+    }
+  }
+}

@@ -54,6 +54,7 @@ def ingest_event(
             db.commit()
         except IntegrityError:
             db.rollback()
+            idempotency_store.register(event.event_id)
             response.status_code = 200
             return IngestionReceipt(event_id=event.event_id, duplicate=True)
 

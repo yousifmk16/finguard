@@ -48,18 +48,18 @@ def _generate_tags(
     n: int,
     rng: np.random.Generator,
     tags_cfg: dict[str, Any] | None,
-) -> list[dict[str, str] | None]:
+) -> list[dict[str, str]]:
     if not tags_cfg:
-        return [None] * n
+        return [{} for _ in range(n)]
 
     enabled = bool(tags_cfg.get("enabled", False))
     if not enabled:
-        return [None] * n
+        return [{} for _ in range(n)]
 
     base = dict(tags_cfg.get("base", {}))
     options = tags_cfg.get("options", {})
 
-    tags: list[dict[str, str] | None] = []
+    tags: list[dict[str, str]] = []
     for _ in range(n):
         current = dict(base)
         for key, values in options.items():
@@ -129,7 +129,12 @@ def _build_base_dataframe(config: dict[str, Any]) -> tuple[pd.DataFrame, dict[st
 
     injectors_cfg = config.get("anomaly_injectors", {})
     budget_cfg = injectors_cfg.get("budget_breach", {})
-    budget_threshold = float(budget_cfg.get("budget_threshold", float(np.nanmean(cost_series))))
+    default_budget = float(np.nanmean(cost_series))
+    if np.isnan(default_budget):
+        default_budget = 1000.0
+    budget_threshold = float(budget_cfg.get("budget_threshold", default_budget))
+    if np.isnan(budget_threshold):
+        budget_threshold = 1000.0
 
     cost_series, spike_mask = apply_spike(cost_series, injectors_cfg.get("spike"), rng)
     cost_series, drift_mask = apply_drift(cost_series, injectors_cfg.get("drift"))

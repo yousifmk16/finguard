@@ -58,7 +58,10 @@ class ThresholdBreachRule:
                 reason=f"Value {value:.2f} within budget limit {self.budget_limit:.2f}.",
             )
 
-        overshoot = (value - self.budget_limit) / self.budget_limit
+        if self.budget_limit == 0.0:
+            overshoot = 1.0
+        else:
+            overshoot = (value - self.budget_limit) / self.budget_limit
         score = min(overshoot, 1.0)
         return RuleResult(
             rule=self.name,

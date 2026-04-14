@@ -83,6 +83,7 @@ import pandas as pd
 from ml.src.models.baseline import TimeSeriesBaselineModel
 from ml.src.models.isolation_forest import IsolationForestDetector
 from ml.src.models.residuals import ResidualScorer, ResidualConfig
+from ml.src.inference.severity import SeverityMapper, SeverityConfig
 from services.rules.engine import (
     ThresholdBreachRule,
     SuddenJumpRule,
@@ -208,8 +209,13 @@ class OnlineScorer:
     model reference, so contention is minimal.
     """
 
-    def __init__(self, config: ScoringConfig | None = None) -> None:
+    def __init__(
+        self,
+        config: ScoringConfig | None = None,
+        severity_mapper: SeverityMapper | None = None,
+    ) -> None:
         self.config = config or ScoringConfig()
+        self._severity_mapper: Optional[SeverityMapper] = severity_mapper
         self._lock = threading.RLock()
         self._baseline: Optional[TimeSeriesBaselineModel] = None
         self._detector: Optional[IsolationForestDetector] = None
@@ -236,6 +242,7 @@ class OnlineScorer:
         baseline_dir: str = "ml/artifacts",
         if_dir: str = "ml/artifacts",
         config: ScoringConfig | None = None,
+        severity_mapper: SeverityMapper | None = None,
     ) -> "OnlineScorer":
         """
         Create a scorer and load both model artifacts in one call.
@@ -253,12 +260,15 @@ class OnlineScorer:
             (if_model.pkl + if_config.json + if_meta.json).
         config:
             ScoringConfig instance.  Defaults to ScoringConfig().
+        severity_mapper:
+            Optional SeverityMapper (ENS-02).  When provided, every call to
+            ``score()`` / ``score_group()`` appends a ``severity`` column.
 
         Returns
         -------
         Fully initialised OnlineScorer ready for inference.
         """
-        scorer = cls(config)
+        scorer = cls(config, severity_mapper=severity_mapper)
         scorer.load_models(baseline_dir=baseline_dir, if_dir=if_dir)
         return scorer
 
@@ -358,6 +368,7 @@ class OnlineScorer:
         result = self._apply_if(result, detector)
         result = self._apply_rules(result)
         result = self._fuse(result)
+        result = self._apply_severity(result)
         return result
 
     def score_group(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -388,6 +399,7 @@ class OnlineScorer:
             g = self._apply_if(g, detector)
             g = self._apply_rules(g)
             g = self._fuse(g)
+            g = self._apply_severity(g)
             parts.append(g)
 
         return pd.concat(parts).reindex(df.index)
@@ -566,6 +578,24 @@ class OnlineScorer:
         return df
 
     # ------------------------------------------------------------------
+    # Internal: ENS-02 severity mapping
+    # ------------------------------------------------------------------
+
+    def _apply_severity(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Append a ``severity`` column if a SeverityMapper was configured.
+
+        No-op when ``self._severity_mapper`` is None.
+        """
+        if self._severity_mapper is None:
+            return df
+        try:
+            return self._severity_mapper.transform(df)
+        except Exception:
+            logger.exception("Severity mapping failed; severity column not added")
+            return df
+
+    # ------------------------------------------------------------------
     # Introspection helpers
     # ------------------------------------------------------------------
 
@@ -590,6 +620,7 @@ class OnlineScorer:
         -------
         dict with keys: baseline_loaded, if_loaded, config (weights + threshold).
         """
+        sev_cfg = self._severity_mapper.config if self._severity_mapper else None
         return {
             "baseline_loaded": self.has_baseline,
             "if_loaded": self.has_detector,
@@ -601,5 +632,10 @@ class OnlineScorer:
                 "enable_ts": self.config.enable_ts,
                 "enable_if": self.config.enable_if,
                 "enable_rules": self.config.enable_rules,
+            },
+            "severity": {
+                "enabled": self._severity_mapper is not None,
+                "low_medium_boundary": sev_cfg.low_medium_boundary if sev_cfg else None,
+                "medium_high_boundary": sev_cfg.medium_high_boundary if sev_cfg else None,
             },
         }

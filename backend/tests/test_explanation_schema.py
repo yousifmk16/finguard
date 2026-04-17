@@ -17,12 +17,10 @@ Covers:
 from __future__ import annotations
 
 import json
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-from pydantic import ValidationError
-
 from app.schemas.explanation import (
     AnomalyExplanationResponse,
     ComponentBreakdownResponse,
@@ -32,7 +30,7 @@ from app.schemas.explanation import (
     format_explanation,
     format_explanation_dict,
 )
-
+from pydantic import ValidationError
 
 # ---------------------------------------------------------------------------
 # Canonical test payloads
@@ -46,7 +44,7 @@ def _component(
     effective_weight: float = 0.35,
     weighted_contribution: float = 0.21,
     active: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return {
         "name": name,
         "label": label,
@@ -63,11 +61,11 @@ def _rule_result(
     fired: bool = False,
     score: float = 0.0,
     reason: str = "Within budget.",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return {"rule": rule, "fired": fired, "score": score, "reason": reason}
 
 
-def _rule_explanation() -> Dict[str, Any]:
+def _rule_explanation() -> dict[str, Any]:
     return {
         "threshold_breach": _rule_result("threshold_breach", False, 0.0, "Within budget."),
         "sudden_jump": _rule_result("sudden_jump", True, 0.8, "Sudden jump of 100.0% detected."),
@@ -77,7 +75,7 @@ def _rule_explanation() -> Dict[str, Any]:
     }
 
 
-def _forecast_explanation(direction: str = "above") -> Dict[str, Any]:
+def _forecast_explanation(direction: str = "above") -> dict[str, Any]:
     return {
         "actual": 150.0,
         "forecast_mean": 100.0,
@@ -91,7 +89,7 @@ def _forecast_explanation(direction: str = "above") -> Dict[str, Any]:
     }
 
 
-def _minimal_payload() -> Dict[str, Any]:
+def _minimal_payload() -> dict[str, Any]:
     return {
         "anomaly_score": 0.62,
         "anomaly_threshold": 0.55,
@@ -105,7 +103,7 @@ def _minimal_payload() -> Dict[str, Any]:
     }
 
 
-def _full_payload() -> Dict[str, Any]:
+def _full_payload() -> dict[str, Any]:
     p = _minimal_payload()
     p["forecast_explanation"] = _forecast_explanation()
     p["rule_explanation"] = _rule_explanation()
@@ -332,7 +330,7 @@ class TestFormatExplanationDict:
 
 
 class TestFormatExplanation:
-    def _make_mock_breakdown(self, payload: Dict[str, Any]) -> MagicMock:
+    def _make_mock_breakdown(self, payload: dict[str, Any]) -> MagicMock:
         mock = MagicMock()
         mock.to_dict.return_value = payload
         return mock

@@ -1,9 +1,8 @@
 import uuid
-from datetime import datetime, timedelta, timezone
-
-from fastapi.testclient import TestClient
+from datetime import UTC, datetime, timedelta
 
 from app.main import app
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
@@ -104,14 +103,14 @@ def test_blank_usage_unit_rejected() -> None:
 
 
 def test_far_future_timestamp_rejected() -> None:
-    far_future = (datetime.now(tz=timezone.utc) + timedelta(hours=1)).isoformat()
+    far_future = (datetime.now(tz=UTC) + timedelta(hours=1)).isoformat()
     response = client.post("/api/v1/events", json={**VALID_EVENT, "timestamp": far_future})
     assert response.status_code == 422
 
 
 def test_near_future_timestamp_accepted() -> None:
     """Timestamps within the 5-minute clock-skew window should pass."""
-    near_future = (datetime.now(tz=timezone.utc) + timedelta(seconds=60)).isoformat()
+    near_future = (datetime.now(tz=UTC) + timedelta(seconds=60)).isoformat()
     response = client.post("/api/v1/events", json={**VALID_EVENT, "timestamp": near_future})
     assert response.status_code == 202
 

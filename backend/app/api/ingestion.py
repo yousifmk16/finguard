@@ -20,7 +20,7 @@ router = APIRouter(prefix="/api/v1", tags=["ingestion"])
 def ingest_event(
     event: BillingEvent,
     response: Response,
-    db: Session | None = Depends(get_db),
+    db: Session | None = Depends(get_db),  # noqa: B008
 ) -> IngestionReceipt:
     """Accept and validate a canonical billing event (ARC-04).
 

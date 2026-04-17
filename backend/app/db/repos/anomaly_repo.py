@@ -33,7 +33,6 @@ from __future__ import annotations
 import logging
 import uuid
 from decimal import Decimal
-from typing import List, Optional
 
 import pandas as pd
 from sqlalchemy import select
@@ -69,7 +68,7 @@ class AnomalyRepository:
         score_col: str = "anomaly_score",
         severity_col: str = "severity",
         bucket_col: str = "bucket",
-    ) -> List[AnomalyRow]:
+    ) -> list[AnomalyRow]:
         """
         Persist all anomalous rows from a scored DataFrame.
 
@@ -107,7 +106,7 @@ class AnomalyRepository:
         if anomalous.empty:
             return []
 
-        saved: List[AnomalyRow] = []
+        saved: list[AnomalyRow] = []
         for _, row in anomalous.iterrows():
             anomaly_row = self._row_to_orm(
                 row,
@@ -157,7 +156,7 @@ class AnomalyRepository:
 
     def _find_existing(
         self, session: Session, anomaly: AnomalyRow
-    ) -> Optional[AnomalyRow]:
+    ) -> AnomalyRow | None:
         """Return an existing row matching the natural key, or None."""
         stmt = select(AnomalyRow).where(
             AnomalyRow.account_id == anomaly.account_id,
@@ -182,7 +181,11 @@ class AnomalyRepository:
                 score_breakdown = breakdown_obj.to_dict()
 
         severity = str(row[severity_col]) if severity_col in row.index else "none"
-        anomaly_score = Decimal(str(float(row[score_col]))) if score_col in row.index else Decimal("0")
+        anomaly_score = (
+            Decimal(str(float(row[score_col])))
+            if score_col in row.index
+            else Decimal("0")
+        )
 
         return AnomalyRow(
             anomaly_id=uuid.uuid4(),

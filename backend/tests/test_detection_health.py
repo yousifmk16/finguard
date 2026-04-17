@@ -7,13 +7,12 @@ dependency-injection system, and scorer/emitter are registered with stubs.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
-from fastapi.testclient import TestClient
-
 from app.api.detection import register_emitter, register_scorer
 from app.main import app
+from fastapi.testclient import TestClient
 from services.detection.metrics import detection_metrics
 
 

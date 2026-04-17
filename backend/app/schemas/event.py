@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator
 
 # Clock-skew tolerance for future timestamps (seconds).
 _MAX_FUTURE_SKEW_SECONDS = 300
@@ -38,14 +38,14 @@ class BillingEvent(BaseModel):
     @field_validator("timestamp", mode="after")
     @classmethod
     def timestamp_not_in_far_future(cls, value: datetime) -> datetime:
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         # Normalize to UTC so naive timestamps (no tz) are comparable.
-        ts = value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
+        ts = value if value.tzinfo is not None else value.replace(tzinfo=UTC)
         if ts > now + timedelta(seconds=_MAX_FUTURE_SKEW_SECONDS):
             raise ValueError(
                 f"timestamp is more than {_MAX_FUTURE_SKEW_SECONDS}s in the future"
             )
-        return value
+        return ts
 
 
 class IngestionReceipt(BaseModel):

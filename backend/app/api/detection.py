@@ -28,7 +28,7 @@ been created yet.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
@@ -44,8 +44,8 @@ router = APIRouter(prefix="/api/v1/detection", tags=["detection"])
 # Registry for live scorer / emitter references
 # ---------------------------------------------------------------------------
 
-_scorer: Optional[object] = None
-_emitter: Optional[object] = None
+_scorer: object | None = None
+_emitter: object | None = None
 
 
 def register_scorer(scorer: object) -> None:
@@ -65,7 +65,7 @@ def register_emitter(emitter: object) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _db_status(db: Optional[Session]) -> Dict[str, Any]:
+def _db_status(db: Session | None) -> dict[str, Any]:
     """
     Return a dict describing DB connectivity to the anomalies table.
 
@@ -84,7 +84,7 @@ def _db_status(db: Optional[Session]) -> Dict[str, Any]:
         return {"status": "error", "detail": str(exc)}
 
 
-def _scorer_status() -> Dict[str, Any]:
+def _scorer_status() -> dict[str, Any]:
     """Return a dict reflecting the live OnlineScorer's model load state."""
     if _scorer is None:
         return {"status": "not_loaded"}
@@ -101,7 +101,7 @@ def _scorer_status() -> Dict[str, Any]:
         return {"status": "error", "detail": str(exc)}
 
 
-def _emitter_status() -> Dict[str, Any]:
+def _emitter_status() -> dict[str, Any]:
     """Return a dict describing the configured anomaly event stream."""
     if _emitter is None:
         return {"status": "not_configured"}
@@ -121,8 +121,8 @@ def _emitter_status() -> Dict[str, Any]:
 
 @router.get("/health", summary="Detection service health check")
 def detection_health(
-    db: Session | None = Depends(get_db),
-) -> Dict[str, Any]:
+    db: Session | None = Depends(get_db),  # noqa: B008
+) -> dict[str, Any]:
     """
     DET-03 health endpoint.
 
@@ -159,7 +159,7 @@ def detection_health(
 
 
 @router.get("/metrics", summary="Detection service metrics snapshot")
-def detection_metrics_endpoint() -> Dict[str, Any]:
+def detection_metrics_endpoint() -> dict[str, Any]:
     """
     DET-03 metrics endpoint.
 

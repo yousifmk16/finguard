@@ -126,13 +126,11 @@ class RollingWindowExtractor:
         if not present_keys:
             return self.transform(df.sort_values("bucket"))
 
-        groups = (
-            df.sort_values(present_keys + ["bucket"])
-            .groupby(present_keys, sort=False)
-            .apply(self.transform, include_groups=False)
-            .reset_index(drop=True)
-        )
-        return groups
+        parts = []
+        sorted_df = df.sort_values(present_keys + ["bucket"])
+        for _, group_df in sorted_df.groupby(present_keys, sort=False):
+            parts.append(self.transform(group_df))
+        return pd.concat(parts, ignore_index=True)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -186,11 +184,13 @@ class RollingWindowExtractor:
     def feature_columns(self) -> list[str]:
         """Returns the list of column names this extractor will produce."""
         col = self.config.target_col
+        has_zscore = "mean" in self.config.agg_funcs and "std" in self.config.agg_funcs
         cols: list[str] = []
         for w in self.config.windows:
             for agg in self.config.agg_funcs:
                 cols.append(f"{col}_roll{w}_{agg}")
-            cols.append(f"{col}_roll{w}_zscore")
+            if has_zscore:
+                cols.append(f"{col}_roll{w}_zscore")
         return cols
 
     def window_values(self, df: pd.DataFrame, window: int) -> pd.Series:

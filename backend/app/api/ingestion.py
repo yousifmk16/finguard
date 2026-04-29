@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/v1", tags=["ingestion"])
     status_code=202,
     responses={200: {"description": "Event already accepted (duplicate event_id)"}},
     summary="Ingest a billing event",
+    # TODO AUTH-01: endpoint is unauthenticated — add JWT/API-key middleware before production.
 )
 def ingest_event(
     event: BillingEvent,
@@ -54,6 +55,8 @@ def ingest_event(
             db.commit()
         except IntegrityError:
             db.rollback()
+            # The in-memory store missed this (e.g. restart, multi-worker race);
+            # backfill it so the next request is caught without hitting the DB.
             idempotency_store.register(event.event_id)
             response.status_code = 200
             return IngestionReceipt(event_id=event.event_id, duplicate=True)

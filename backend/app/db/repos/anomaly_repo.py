@@ -32,10 +32,11 @@ from __future__ import annotations
 
 import logging
 import uuid
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pandas as pd
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.models.anomaly import AnomalyRow
@@ -121,6 +122,75 @@ class AnomalyRepository:
         )
         return saved
 
+    def list_anomalies(
+        self,
+        session: Session,
+        *,
+        account_id: str | None = None,
+        service: str | None = None,
+        region: str | None = None,
+        severity: str | None = None,
+        status: str | None = None,
+        from_bucket: datetime | None = None,
+        to_bucket: datetime | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> tuple[list[AnomalyRow], int]:
+        """
+        API-01: Return a filtered, paginated page of anomaly records.
+
+        Parameters
+        ----------
+        session:
+            Active SQLAlchemy session.
+        account_id, service, region, severity, status:
+            Optional equality filters.
+        from_bucket, to_bucket:
+            Optional inclusive range filter on the ``bucket`` datetime column.
+        page:
+            1-indexed page number.
+        page_size:
+            Rows per page.
+
+        Returns
+        -------
+        (rows, total) where ``rows`` is the current page and ``total`` is the
+        count of all matching rows (used to compute ``pages``).
+        """
+        filters = []
+        if account_id is not None:
+            filters.append(AnomalyRow.account_id == account_id)
+        if service is not None:
+            filters.append(AnomalyRow.service == service)
+        if region is not None:
+            filters.append(AnomalyRow.region == region)
+        if severity is not None:
+            filters.append(AnomalyRow.severity == severity)
+        if status is not None:
+            filters.append(AnomalyRow.status == status)
+        if from_bucket is not None:
+            filters.append(AnomalyRow.bucket >= from_bucket)
+        if to_bucket is not None:
+            filters.append(AnomalyRow.bucket <= to_bucket)
+
+        count_stmt = select(func.count()).select_from(AnomalyRow)
+        rows_stmt = select(AnomalyRow)
+        if filters:
+            count_stmt = count_stmt.where(*filters)
+            rows_stmt = rows_stmt.where(*filters)
+
+        total: int = session.execute(count_stmt).scalar_one()
+
+        rows_stmt = (
+            rows_stmt
+            .order_by(AnomalyRow.detected_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        rows = list(session.execute(rows_stmt).scalars().all())
+
+        return rows, total
+
     def save(self, session: Session, anomaly: AnomalyRow) -> AnomalyRow:
         """
         Upsert a single ``AnomalyRow``.
@@ -153,6 +223,99 @@ class AnomalyRepository:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+
+    def get_by_id(
+        self, session: Session, anomaly_id: uuid.UUID
+    ) -> AnomalyRow | None:
+        """API-02: Return a single AnomalyRow by primary key, or None."""
+        return session.execute(
+            select(AnomalyRow).where(AnomalyRow.anomaly_id == anomaly_id)
+        ).scalar_one_or_none()
+
+    def update_status(
+        self, session: Session, anomaly_id: uuid.UUID, status: str
+    ) -> AnomalyRow | None:
+        """
+        API-03: Update the lifecycle status of an anomaly.
+
+        Returns the updated row, or None if not found.
+        The caller owns the transaction (commit/rollback).
+        """
+        row = self.get_by_id(session, anomaly_id)
+        if row is None:
+            return None
+        row.status = status
+        return row
+
+    def kpi_summary(self, session: Session) -> dict:
+        """
+        API-05: Aggregate KPI statistics from the anomalies table.
+
+        Runs six lightweight queries:
+          1. total count
+          2. per-status counts
+          3. per-severity counts
+          4. count in the last 24 h
+          5. top-5 services by anomaly count
+          6. top-5 accounts by anomaly count
+        """
+        total: int = session.execute(
+            select(func.count()).select_from(AnomalyRow)
+        ).scalar_one()
+
+        status_counts: dict[str, int] = dict(
+            session.execute(
+                select(AnomalyRow.status, func.count()).group_by(AnomalyRow.status)
+            ).all()
+        )
+
+        severity_counts: dict[str, int] = dict(
+            session.execute(
+                select(AnomalyRow.severity, func.count()).group_by(AnomalyRow.severity)
+            ).all()
+        )
+
+        cutoff = datetime.now(tz=UTC) - timedelta(hours=24)
+        last_24h: int = session.execute(
+            select(func.count())
+            .select_from(AnomalyRow)
+            .where(AnomalyRow.detected_at >= cutoff)
+        ).scalar_one()
+
+        cnt = func.count().label("cnt")
+        top_services = [
+            {"service": svc, "count": n}
+            for svc, n in session.execute(
+                select(AnomalyRow.service, cnt)
+                .group_by(AnomalyRow.service)
+                .order_by(cnt.desc())
+                .limit(5)
+            ).all()
+        ]
+
+        top_accounts = [
+            {"account_id": aid, "count": n}
+            for aid, n in session.execute(
+                select(AnomalyRow.account_id, cnt)
+                .group_by(AnomalyRow.account_id)
+                .order_by(cnt.desc())
+                .limit(5)
+            ).all()
+        ]
+
+        return {
+            "total_anomalies": total,
+            "open_count": status_counts.get("open", 0),
+            "acknowledged_count": status_counts.get("acknowledged", 0),
+            "resolved_count": status_counts.get("resolved", 0),
+            "suppressed_count": status_counts.get("suppressed", 0),
+            "high_severity_count": severity_counts.get("high", 0),
+            "medium_severity_count": severity_counts.get("medium", 0),
+            "low_severity_count": severity_counts.get("low", 0),
+            "anomalies_last_24h": last_24h,
+            "top_services": top_services,
+            "top_accounts": top_accounts,
+        }
 
     def _find_existing(
         self, session: Session, anomaly: AnomalyRow

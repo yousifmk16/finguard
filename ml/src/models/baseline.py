@@ -233,6 +233,10 @@ class TimeSeriesBaselineModel:
 
         This is the recommended method when you have training data from
         many services and want a single deployable model artifact.
+
+        Note: functionally identical to ``fit()`` — both pool all rows into a
+        single profile regardless of group boundaries.  ``predict_group()``
+        applies EWMA independently per group to prevent cross-series bleed.
         """
         self._validate_train(df)
         df_work = self._ensure_time_context(df)

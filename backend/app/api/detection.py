@@ -67,21 +67,21 @@ def register_emitter(emitter: object) -> None:
 
 def _db_status(db: Session | None) -> dict[str, Any]:
     """
-    Return a dict describing DB connectivity to the anomalies table.
+    Return a dict describing DB connectivity.
 
-    Performs a lightweight COUNT query.  On failure the error message is
-    included so operators can diagnose connection problems quickly.
+    Performs a lightweight SELECT 1 (pure connectivity check — avoids
+    a table scan on every health poll).  On failure the error message is
+    logged server-side only; the client receives a generic "database error"
+    string to prevent leaking connection details.
     """
     if db is None:
         return {"status": "not_configured", "detail": "DATABASE_URL not set"}
     try:
-        count = db.execute(
-            text("SELECT COUNT(*) FROM anomalies")
-        ).scalar_one()
-        return {"status": "ok", "anomaly_count": count}
+        db.execute(text("SELECT 1"))
+        return {"status": "ok"}
     except Exception as exc:  # noqa: BLE001
         logger.warning("DET-03: DB health check failed: %s", exc)
-        return {"status": "error", "detail": str(exc)}
+        return {"status": "error", "detail": "database error"}
 
 
 def _scorer_status() -> dict[str, Any]:

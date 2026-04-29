@@ -95,8 +95,8 @@ OBS-02 | Add health endpoint for ingestion service | M5 | S2 | ING-01 |
 ====================================================================
 Sprint 3 (Weeks 5-6) - Detection Engine and Explainability
 ====================================================================
-RUL-03 | Implement sustained increase rule | M2 | S3 | RUL-01 |
-RUL-04 | Add rule weights and config | M2 | S3 | RUL-03 |
+le | M2 | S3 | FEA-01 | 
+RUL-04 | Add rule weights and config | M2 | 
 FEA-01 | Build rolling window feature extractor | M2 | S3 | DB-02 | 
 FEA-02 | Add growth-rate features | M2 | S3 | FEA-01 | 
 FEA-03 | Add volatility features | M2 | S3 | FEA-01 | 

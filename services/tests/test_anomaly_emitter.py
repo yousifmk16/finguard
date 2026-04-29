@@ -123,9 +123,10 @@ class TestAnomalyEventFromRow:
         assert "+00:00" in event.bucket
 
     def test_none_detected_at_falls_back_gracefully(self) -> None:
+        # None occurs when a row is emitted before db.refresh() populates the
+        # server-default. The fallback emits current UTC time with a log warning.
         row = _make_row(detected_at=None)
         event = AnomalyEvent.from_row(row)
-        # Should be a non-empty string (current UTC time fallback)
         assert isinstance(event.detected_at, str)
         assert len(event.detected_at) > 0
 

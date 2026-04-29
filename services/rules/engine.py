@@ -106,11 +106,22 @@ class SuddenJumpRule:
 
         mean = float(np.mean(window))
         if mean == 0.0:
+            if current > 0.0:
+                # Any positive spend from a zero-cost baseline is maximally anomalous.
+                return RuleResult(
+                    rule=self.name,
+                    fired=True,
+                    score=1.0,
+                    reason=(
+                        f"Window mean is zero and current value is {current:.2f} — "
+                        "any positive spend from a zero baseline is a maximum anomaly."
+                    ),
+                )
             return RuleResult(
                 rule=self.name,
                 fired=False,
                 score=0.0,
-                reason="Window mean is zero; cannot compute relative jump.",
+                reason="Window mean and current value are both zero; no jump detected.",
             )
 
         actual_pct = (current - mean) / mean

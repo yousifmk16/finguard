@@ -34,9 +34,8 @@ def reset_state():
 
 
 def _stub_db_ok():
-    """Return a mock Session that reports 5 anomalies in the table."""
+    """Return a mock Session that responds successfully to SELECT 1."""
     db = MagicMock()
-    db.execute.return_value.scalar_one.return_value = 5
     return db
 
 
@@ -123,7 +122,7 @@ class TestDetectionHealthDbOk:
         r = client.get("/api/v1/detection/health")
         db_info = r.json()["components"]["db"]
         assert db_info["status"] == "ok"
-        assert db_info["anomaly_count"] == 5
+        # Health check uses SELECT 1 (connectivity only) — no anomaly_count field.
 
 
 # ---------------------------------------------------------------------------

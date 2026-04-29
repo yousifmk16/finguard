@@ -147,8 +147,14 @@ class TestSuddenJumpRule:
         assert result.fired is False
         assert result.score == 0.0
 
-    def test_zero_mean_window_does_not_fire(self) -> None:
+    def test_zero_mean_positive_current_fires_max(self) -> None:
+        # Any positive spend from a zero-cost baseline is maximally anomalous.
         result = self._rule().evaluate(100.0, [0.0, 0.0, 0.0])
+        assert result.fired is True
+        assert result.score == 1.0
+
+    def test_zero_mean_zero_current_does_not_fire(self) -> None:
+        result = self._rule().evaluate(0.0, [0.0, 0.0, 0.0])
         assert result.fired is False
         assert result.score == 0.0
 

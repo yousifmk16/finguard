@@ -258,8 +258,10 @@ def _to_iso(value: object) -> str:
     """
     Coerce a datetime (or None) to a UTC ISO-8601 string.
 
-    Falls back to the current UTC time when ``value`` is None so the
-    event is always valid for the consumer.
+    Falls back to the current UTC time when ``value`` is None — this
+    happens when an ``AnomalyRow`` is emitted before its ``detected_at``
+    server-default has been loaded back from the DB.  Call
+    ``db.refresh(row)`` before ``emit_rows()`` to avoid the fallback.
     """
     if isinstance(value, datetime):
         if value.tzinfo is None:
@@ -267,4 +269,8 @@ def _to_iso(value: object) -> str:
         return value.astimezone(timezone.utc).isoformat()
     if value is not None:
         return str(value)
+    logger.warning(
+        "_to_iso: datetime value is None — falling back to current UTC time. "
+        "Call db.refresh(row) before emit_rows() to emit the correct timestamp."
+    )
     return datetime.now(tz=timezone.utc).isoformat()

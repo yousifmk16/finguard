@@ -28,6 +28,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.api.rbac import require_analyst_or_admin
 from app.db.repos.anomaly_repo import AnomalyRepository
 from app.db.session import get_db
 from app.schemas.kpi import KpiSummaryResponse
@@ -55,7 +56,11 @@ _ZERO_KPI = KpiSummaryResponse(
     "/kpi/summary",
     response_model=KpiSummaryResponse,
     summary="KPI summary",
-    # TODO AUTH-01: unauthenticated — add middleware before production.
+    responses={
+        401: {"description": "Missing or invalid bearer token"},
+        403: {"description": "Authenticated user lacks an analyst/admin role"},
+    },
+    dependencies=[Depends(require_analyst_or_admin)],
 )
 def kpi_summary(
     db: Session | None = Depends(get_db),  # noqa: B008

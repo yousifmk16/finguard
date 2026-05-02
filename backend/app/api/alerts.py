@@ -25,6 +25,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from app.api.rbac import require_analyst_or_admin
 from app.db.repos.alert_repo import AlertRepository
 from app.db.session import get_db
 from app.schemas.alert import AlertListResponse, AlertResponse
@@ -42,7 +43,11 @@ _Channel = Literal["in_app", "email"]
     "/alerts",
     response_model=AlertListResponse,
     summary="List alerts",
-    # TODO AUTH-01: unauthenticated — add middleware before production.
+    responses={
+        401: {"description": "Missing or invalid bearer token"},
+        403: {"description": "Authenticated user lacks an analyst/admin role"},
+    },
+    dependencies=[Depends(require_analyst_or_admin)],
 )
 def list_alerts(
     db: Session | None = Depends(get_db),  # noqa: B008

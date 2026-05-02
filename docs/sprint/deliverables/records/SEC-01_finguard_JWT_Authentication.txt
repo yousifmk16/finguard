@@ -1,0 +1,47 @@
+TASK-ID Deliverable
+Task: SEC-01 Implement JWT authentication
+Repository: finguard
+Status: Done
+Owner: M1
+Verified by: Codex
+Date: 2026-05-02
+
+1) Files Added/Updated
+- `backend/app/core/security.py`              (new) bcrypt + HS256 JWT helpers
+- `backend/app/db/models/user.py`             (new) UserRow ORM model
+- `backend/app/db/models/__init__.py`         export UserRow
+- `backend/alembic/versions/0004_create_users.py` (new) users table migration
+- `backend/app/db/repos/user_repo.py`         (new) lookup-by-email/by-id
+- `backend/app/schemas/auth.py`               (new) LoginRequest / TokenResponse / CurrentUser
+- `backend/app/api/auth.py`                   (new) POST /api/v1/auth/login + get_current_user
+- `backend/app/main.py`                       wire auth router and OpenAPI tag
+- `backend/requirements.txt`                  add PyJWT, bcrypt, email-validator
+- `backend/tests/test_auth.py`                (new) 21 tests for hashing, JWT, login, dep
+
+2) What Was Implemented
+- bcrypt-hashed credentials and HS256 JWT encode/decode in `app/core/security.py`,
+  configured via JWT_SECRET / JWT_ALGORITHM / JWT_EXPIRE_MINUTES env vars. A dev
+  fallback secret keeps unit tests runnable; production deploys must override it.
+- `users` table (DB-04 sibling) carrying email, hashed_password, role, is_active,
+  created_at, with a unique index on lower(email).
+- `POST /api/v1/auth/login` validates credentials and returns a bearer token plus
+  ttl and granted role.
+- `get_current_user` FastAPI dependency resolves the Authorization header into a
+  `CurrentUser` (user_id, email, role). Rejects missing/wrong-scheme headers,
+  invalid signatures, expired tokens, non-UUID `sub` claims, and tokens whose
+  user is missing or inactive. SEC-02 will consume the role; this task does not
+  enforce per-endpoint RBAC.
+- All existing API endpoints stay unauthenticated for now (their TODO AUTH-01
+  comments remain), since wiring them is the scope of SEC-03.
+
+3) Acceptance Checklist
+- [x] Password hashing uses a salted KDF (bcrypt); plaintext never persisted.
+- [x] Tokens are signed (HS256) and carry sub + role + iat + exp claims.
+- [x] Login returns 401 on unknown email, wrong password, or inactive user.
+- [x] get_current_user returns 401 on missing/invalid/expired tokens and on
+      tokens referencing missing or inactive users.
+- [x] 21/21 new tests pass; full backend suite (203 tests) green.
+- [x] Aligned with ARC-07 roles (admin | analyst) and FR-01 secure login.
+
+4) Next Task
+- SEC-02 (Implement RBAC middleware)

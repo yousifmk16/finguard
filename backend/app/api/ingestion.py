@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Response
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.api.rbac import require_admin
 from app.core.idempotency import store as idempotency_store
 from app.db.models.billing_event import BillingEventRow
 from app.db.session import get_db
@@ -14,9 +15,13 @@ router = APIRouter(prefix="/api/v1", tags=["ingestion"])
     "/events",
     response_model=IngestionReceipt,
     status_code=202,
-    responses={200: {"description": "Event already accepted (duplicate event_id)"}},
+    responses={
+        200: {"description": "Event already accepted (duplicate event_id)"},
+        401: {"description": "Missing or invalid bearer token"},
+        403: {"description": "Authenticated user lacks the admin role"},
+    },
     summary="Ingest a billing event",
-    # TODO AUTH-01: endpoint is unauthenticated — add JWT/API-key middleware before production.
+    dependencies=[Depends(require_admin)],
 )
 def ingest_event(
     event: BillingEvent,

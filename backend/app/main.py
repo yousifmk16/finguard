@@ -3,6 +3,7 @@ from fastapi.exceptions import RequestValidationError
 
 from app.api.alerts import router as alerts_router
 from app.api.anomalies import router as anomalies_router
+from app.api.auth import router as auth_router
 from app.api.detection import router as detection_router
 from app.api.ingestion import router as ingestion_router
 from app.api.kpi import router as kpi_router
@@ -34,6 +35,10 @@ _TAGS = [
         "name": "detection",
         "description": "Health and metrics endpoints for the real-time detection pipeline (DET-03).",
     },
+    {
+        "name": "auth",
+        "description": "JWT authentication: login and bearer-token issuance (SEC-01).",
+    },
 ]
 
 app = FastAPI(
@@ -52,6 +57,7 @@ app = FastAPI(
 )
 
 app.add_exception_handler(RequestValidationError, validation_error_handler)
+app.include_router(auth_router)
 app.include_router(ingestion_router)
 app.include_router(anomalies_router)
 app.include_router(alerts_router)

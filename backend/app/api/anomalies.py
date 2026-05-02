@@ -40,6 +40,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.api.rbac import require_analyst_or_admin
 from app.db.repos.anomaly_repo import AnomalyRepository
 from app.db.session import get_db
 from app.schemas.anomaly import (
@@ -60,7 +61,11 @@ _Status = Literal["open", "acknowledged", "resolved", "suppressed"]
     "/anomalies",
     response_model=AnomalyListResponse,
     summary="List anomalies",
-    # TODO AUTH-01: endpoint is unauthenticated — add JWT/API-key middleware before production.
+    responses={
+        401: {"description": "Missing or invalid bearer token"},
+        403: {"description": "Authenticated user lacks an analyst/admin role"},
+    },
+    dependencies=[Depends(require_analyst_or_admin)],
 )
 def list_anomalies(
     db: Session | None = Depends(get_db),  # noqa: B008
@@ -115,8 +120,12 @@ def list_anomalies(
     "/anomalies/{anomaly_id}",
     response_model=AnomalyResponse,
     summary="Get anomaly detail",
-    responses={404: {"description": "Anomaly not found"}},
-    # TODO AUTH-01: unauthenticated — add middleware before production.
+    responses={
+        401: {"description": "Missing or invalid bearer token"},
+        403: {"description": "Authenticated user lacks an analyst/admin role"},
+        404: {"description": "Anomaly not found"},
+    },
+    dependencies=[Depends(require_analyst_or_admin)],
 )
 def get_anomaly(
     anomaly_id: uuid.UUID,
@@ -135,8 +144,12 @@ def get_anomaly(
     "/anomalies/{anomaly_id}/status",
     response_model=AnomalyResponse,
     summary="Update anomaly status",
-    responses={404: {"description": "Anomaly not found"}},
-    # TODO AUTH-01: unauthenticated — add middleware before production.
+    responses={
+        401: {"description": "Missing or invalid bearer token"},
+        403: {"description": "Authenticated user lacks an analyst/admin role"},
+        404: {"description": "Anomaly not found"},
+    },
+    dependencies=[Depends(require_analyst_or_admin)],
 )
 def update_anomaly_status(
     anomaly_id: uuid.UUID,

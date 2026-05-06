@@ -26,3 +26,10 @@
 ## Sprint 4 (Security)
 
 - `docs/sprint/deliverables/records/SEC-01_finguard_JWT_Authentication.txt`
+
+## Sprint 4 (UI)
+
+- `docs/sprint/deliverables/records/UI-01_finguard_App_Shell_and_Routing.txt`
+- `docs/sprint/deliverables/records/UI-02_finguard_Login_Page_and_Token_Handling.txt`
+- `docs/sprint/deliverables/records/UI-03_finguard_Anomaly_List_Page.txt`
+- `docs/sprint/deliverables/records/UI-04_finguard_Anomaly_Detail_Page.txt`

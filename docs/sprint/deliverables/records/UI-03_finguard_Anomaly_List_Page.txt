@@ -1,0 +1,87 @@
+UI-03 Deliverable
+Task: Build anomaly list page
+Repository: finguard
+Status: Done
+Owner: M4
+Verified by: M4
+Date: 2026-05-06
+
+1) Files Added/Updated
+- `frontend/src/features/anomalies/types.ts`             (new) TS types matching API-01 schemas
+- `frontend/src/features/anomalies/anomalies-api.ts`     (new) `listAnomalies` + `getAnomaly` clients
+- `frontend/src/features/anomalies/useAnomaliesList.ts`  (new) hook: fetch, abort, error mapping
+- `frontend/src/features/anomalies/AnomaliesListPage.tsx`(updated) real table + URL-driven pagination
+- `frontend/src/components/common/Pagination.tsx`        (new) page summary + prev/next controls
+- `frontend/src/components/common/SeverityBadge.tsx`     (new) severity pill (none/low/medium/high)
+- `frontend/src/components/common/StatusBadge.tsx`       (new) lifecycle pill (open/ack/resolved/suppressed)
+- `frontend/src/lib/formatters.ts`                       (new) `formatDateTime`, `formatScore`, `shortId`
+- `frontend/src/styles/global.css`                       (updated) data-table, pagination, badges, state-banner
+
+2) What Was Implemented
+- TypeScript types `AnomalyRecord`, `AnomalyListResponse`, `AnomalyListQuery` mirror
+  the backend `AnomalyResponse` / `AnomalyListResponse` schemas exactly so the client
+  parses the API-01 payload without runtime massaging.
+- `listAnomalies(query, token)` builds a URLSearchParams object covering every
+  documented filter (account_id, service, region, severity, status, from_bucket,
+  to_bucket) plus pagination (page, page_size). UI-05 will wire filter values into
+  this call without changing the page shell.
+- `useAnomaliesList(query)` is a self-contained data hook: it owns loading/error
+  state, aborts the in-flight request when the query changes or the component
+  unmounts, re-runs only when the serialized query, token, or reload key changes,
+  and exposes a `reload()` function for the manual refresh button.
+- 401 from the API triggers `signOut()` so the AuthProvider clears the session and
+  ProtectedRoute redirects to `/login?reason=expired`. 403 surfaces a dedicated
+  "no permission" message; network failures and other errors degrade gracefully
+  with a retry button in a `state-banner--error` strip.
+- Pagination state lives in the URL via `useSearchParams` (`?page=2&page_size=25`),
+  so back/forward, refresh, and shared links all return to the same view. The
+  default page size is 25 and is clamped to the API's documented 1..200 range.
+- The table renders the columns from the UX-01 wireframe (ID, Account, Service,
+  Region, Score, Severity, Status, Detected) plus a "View detail" link that routes
+  to `/anomalies/:anomalyId` (UI-04). Anomaly IDs are truncated for density and
+  expose the full UUID via the link's `title` attribute.
+- Severity and status are rendered with reusable badge components keyed by lower-
+  cased value so future statuses inherit base styling automatically. Badge
+  palettes follow the FinGuard severity convention: high=red, medium=amber,
+  low=blue, none/suppressed=muted; resolved=green, acknowledged=amber, open=red.
+- Explicit empty / loading / error states (per UX-01 "Global UX Rules"):
+  - Loading (first fetch): "Loading anomalies..." placeholder row, table marked
+    `aria-busy`.
+  - Empty: "No anomalies match the current view." placeholder row.
+  - Error: dismiss-free banner with the failure message and a "Try again" button
+    that triggers `reload()`.
+  - Background refresh: existing rows stay on screen and the Refresh button
+    label switches to "Refreshing...".
+- Pagination summary reads "Showing X-Y of Z" when results exist and "No results"
+  when empty, matching list-view conventions and a11y-friendly to screen readers.
+
+3) Acceptance Checklist
+- [x] Authenticated GET to `/api/v1/anomalies` with `page` + `page_size` query
+      params.
+- [x] Bearer token sourced from `useAuth().session.token`; absent token still
+      reaches ProtectedRoute first, so the page itself never renders unauthenticated.
+- [x] Pagination state survives reload via URL search params; prev/next disabled
+      at boundaries; clamped to API limits.
+- [x] Loading, empty, and error states are visually and semantically distinct
+      (`role="alert"`, `aria-busy`).
+- [x] Each row links to the anomaly detail route owned by UI-04.
+- [x] Auto sign-out on 401; permission message on 403; retry button on transient
+      failures.
+- [x] Columns and badges match the UX-01 dashboard wireframe (severity-first
+      visual prominence preserved).
+- [x] Filter parameters are already plumbed through the API client and types so
+      UI-05 is a UI-only change.
+
+4) Notes for Reviewer
+- TypeScript "Cannot find module 'react'" diagnostics persist in the IDE until
+  `cd frontend && npm install` is run; the deps are still declared in
+  `package.json`. There are no new runtime deps beyond UI-01/UI-02.
+- Filtering and sorting controls are intentionally out of scope (UI-05). The page
+  exposes a manual refresh and URL-driven pagination only.
+- The anomaly detail page is still a placeholder; clicking "View detail" lands on
+  the UI-04 stub until that task ships.
+
+5) Next Task
+- UI-04 (Build anomaly detail page) consumes the same `getAnomaly` client.
+- UI-05 (filters and sorting controls) layers UI on top of the existing
+  `AnomalyListQuery` plumbing.

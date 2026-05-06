@@ -2,9 +2,25 @@
   "name": "finguard-frontend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "node -e \"console.log('Frontend skeleton running on port 3000'); setInterval(()=>{}, 1<<30)\"",
-    "lint": "node -e \"console.log('frontend lint placeholder passed')\"",
+    "dev": "vite --host 0.0.0.0 --port 3000",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 3000",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" --max-warnings 0",
+    "typecheck": "tsc --noEmit",
     "test": "node -e \"console.log('frontend test placeholder passed')\""
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.6"
   }
 }

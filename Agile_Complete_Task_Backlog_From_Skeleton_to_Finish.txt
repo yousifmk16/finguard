@@ -151,8 +151,8 @@ ALT-06 | Add alert retry and failure handling | M5 | S4 | ALT-05 |
 
 SEC-01 | Implement JWT authentication | M1 | S4 | ARC-07 | 
 SEC-02 | Implement RBAC middleware | M1 | S4 | SEC-01 | 
-SEC-03 | Add role-protected endpoints | M1 | S4 | SEC-02 | 
-SEC-04 | Add audit logs for auth and admin actions | M5 | S4 | SEC-01 | 
+SEC-03 | Add role-protected endpoints | M1 | S4 | SEC-02 | DONE
+SEC-04 | Add audit logs for auth and admin actions | M5 | S4 | SEC-01 | DONE
 
 UI-01 | Build app shell and routing | M4 | S4 | UX-01 | 
 UI-02 | Build login page and token handling | M4 | S4 | SEC-01 | 

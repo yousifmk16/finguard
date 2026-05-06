@@ -1,9 +1,11 @@
 """
 SEC-01: JWT authentication.
+SEC-04: login attempts (success + failure) recorded to ``audit_logs``.
 
 POST /api/v1/auth/login
     Verify email + password against the ``users`` table and return a
-    signed bearer token.
+    signed bearer token. Every attempt — success or failure — is written
+    to the audit log with outcome and reason.
 
 get_current_user (FastAPI dependency)
     Resolve the bearer token on the ``Authorization`` header into a
@@ -17,10 +19,15 @@ from __future__ import annotations
 import uuid
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app.audit import (
+    record_login_failure,
+    record_login_success,
+    request_context,
+)
 from app.core.security import (
     access_token_ttl_seconds,
     create_access_token,
@@ -62,18 +69,48 @@ _DB_UNAVAILABLE = HTTPException(
 )
 def login(
     body: LoginRequest,
+    request: Request,
     db: Session | None = Depends(get_db),  # noqa: B008
 ) -> TokenResponse:
     if db is None:
         raise _DB_UNAVAILABLE
 
+    ip, ua = request_context(request)
+
     user = _repo.get_by_email(db, body.email)
     if user is None or not user.is_active:
+        record_login_failure(
+            db,
+            attempted_email=body.email,
+            reason="unknown_or_inactive_user",
+            user_id=user.user_id if user is not None else None,
+            role=user.role if user is not None else None,
+            ip_address=ip,
+            user_agent=ua,
+        )
         raise _INVALID_CREDENTIALS
     if not verify_password(body.password, user.hashed_password):
+        record_login_failure(
+            db,
+            attempted_email=user.email,
+            reason="wrong_password",
+            user_id=user.user_id,
+            role=user.role,
+            ip_address=ip,
+            user_agent=ua,
+        )
         raise _INVALID_CREDENTIALS
 
     token = create_access_token(user_id=user.user_id, role=user.role)
+    record_login_success(
+        db,
+        user_id=user.user_id,
+        email=user.email,
+        role=user.role,
+        ip_address=ip,
+        user_agent=ua,
+    )
+    db.commit()
     return TokenResponse(
         access_token=token,
         expires_in=access_token_ttl_seconds(),

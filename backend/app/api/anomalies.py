@@ -2,6 +2,8 @@
 API-01: Anomaly list endpoint with pagination and filtering.
 API-02: Anomaly detail endpoint.
 API-03: Anomaly status update endpoint.
+SEC-04: Status updates are recorded to ``audit_logs`` (privileged
+operator action — read-only list/detail are not audited).
 
 GET /api/v1/anomalies
     Returns a paginated, optionally filtered list of anomaly records.
@@ -31,16 +33,21 @@ Response shape:
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 from math import ceil
 from typing import Literal
 
-import uuid
-
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from app.api.rbac import require_analyst_or_admin
+from app.audit import (
+    EVENT_ANOMALY_STATUS_UPDATE,
+    OUTCOME_SUCCESS,
+    record_admin_action,
+    request_context,
+)
 from app.db.repos.anomaly_repo import AnomalyRepository
 from app.db.session import get_db
 from app.schemas.anomaly import (
@@ -48,6 +55,7 @@ from app.schemas.anomaly import (
     AnomalyResponse,
     AnomalyStatusUpdate,
 )
+from app.schemas.auth import CurrentUser
 
 router = APIRouter(prefix="/api/v1", tags=["anomalies"])
 
@@ -149,11 +157,12 @@ def get_anomaly(
         403: {"description": "Authenticated user lacks an analyst/admin role"},
         404: {"description": "Anomaly not found"},
     },
-    dependencies=[Depends(require_analyst_or_admin)],
 )
 def update_anomaly_status(
     anomaly_id: uuid.UUID,
     body: AnomalyStatusUpdate,
+    request: Request,
+    actor: CurrentUser = Depends(require_analyst_or_admin),  # noqa: B008
     db: Session | None = Depends(get_db),  # noqa: B008
 ) -> AnomalyResponse:
     """API-03: Transition an anomaly to a new lifecycle status."""
@@ -162,6 +171,21 @@ def update_anomaly_status(
     row = _repo.update_status(db, anomaly_id, body.status)
     if row is None:
         raise HTTPException(status_code=404, detail="anomaly not found")
+
+    ip, ua = request_context(request)
+    record_admin_action(
+        db,
+        event_type=EVENT_ANOMALY_STATUS_UPDATE,
+        action="status_update",
+        actor=actor,
+        target_type="anomaly",
+        target_id=str(anomaly_id),
+        outcome=OUTCOME_SUCCESS,
+        ip_address=ip,
+        user_agent=ua,
+        meta={"new_status": body.status},
+    )
+
     db.commit()
     db.refresh(row)
     return AnomalyResponse.model_validate(row)

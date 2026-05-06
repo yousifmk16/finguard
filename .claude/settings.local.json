@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m ruff check app/audit app/api/audit.py app/api/auth.py app/api/anomalies.py app/api/ingestion.py app/db/models/audit_log.py app/db/repos/audit_log_repo.py app/schemas/audit.py alembic/versions/0005_create_audit_logs.py tests/test_audit_recorder.py tests/test_audit_integration.py tests/test_audit_log_endpoint.py)"
+    ]
+  }
+}

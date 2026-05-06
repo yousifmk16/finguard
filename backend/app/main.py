@@ -3,6 +3,7 @@ from fastapi.exceptions import RequestValidationError
 
 from app.api.alerts import router as alerts_router
 from app.api.anomalies import router as anomalies_router
+from app.api.audit import router as audit_router
 from app.api.auth import router as auth_router
 from app.api.detection import router as detection_router
 from app.api.ingestion import router as ingestion_router
@@ -39,6 +40,10 @@ _TAGS = [
         "name": "auth",
         "description": "JWT authentication: login and bearer-token issuance (SEC-01).",
     },
+    {
+        "name": "audit",
+        "description": "Admin-only audit log retrieval for auth and privileged actions (SEC-04).",
+    },
 ]
 
 app = FastAPI(
@@ -63,6 +68,7 @@ app.include_router(anomalies_router)
 app.include_router(alerts_router)
 app.include_router(kpi_router)
 app.include_router(detection_router)
+app.include_router(audit_router)
 
 
 @app.get("/health", tags=["detection"])

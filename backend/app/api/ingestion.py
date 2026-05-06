@@ -1,11 +1,18 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.rbac import require_admin
+from app.audit import (
+    EVENT_INGEST_EVENT,
+    OUTCOME_SUCCESS,
+    record_admin_action,
+    request_context,
+)
 from app.core.idempotency import store as idempotency_store
 from app.db.models.billing_event import BillingEventRow
 from app.db.session import get_db
+from app.schemas.auth import CurrentUser
 from app.schemas.event import BillingEvent, IngestionReceipt
 
 router = APIRouter(prefix="/api/v1", tags=["ingestion"])
@@ -21,11 +28,12 @@ router = APIRouter(prefix="/api/v1", tags=["ingestion"])
         403: {"description": "Authenticated user lacks the admin role"},
     },
     summary="Ingest a billing event",
-    dependencies=[Depends(require_admin)],
 )
 def ingest_event(
     event: BillingEvent,
     response: Response,
+    request: Request,
+    actor: CurrentUser = Depends(require_admin),  # noqa: B008
     db: Session | None = Depends(get_db),  # noqa: B008
 ) -> IngestionReceipt:
     """Accept and validate a canonical billing event (ARC-04).
@@ -36,6 +44,10 @@ def ingest_event(
     When a live DB session is available the event is persisted to
     ``billing_events_raw`` (DB-01).  The in-memory store provides a fast
     pre-check so most duplicates never reach the database.
+
+    SEC-04: every accepted ingest is recorded in ``audit_logs``. Duplicate
+    submissions are deliberately *not* re-audited — the original ingest
+    already produced a row.
     """
     if idempotency_store.is_duplicate(event.event_id):
         response.status_code = 200
@@ -67,4 +79,26 @@ def ingest_event(
             return IngestionReceipt(event_id=event.event_id, duplicate=True)
 
     idempotency_store.register(event.event_id)
+
+    if db is not None:
+        ip, ua = request_context(request)
+        record_admin_action(
+            db,
+            event_type=EVENT_INGEST_EVENT,
+            action="ingest",
+            actor=actor,
+            target_type="billing_event",
+            target_id=str(event.event_id),
+            outcome=OUTCOME_SUCCESS,
+            ip_address=ip,
+            user_agent=ua,
+            meta={
+                "provider": event.provider,
+                "account_id": event.account_id,
+                "service": event.service,
+                "region": event.region,
+            },
+        )
+        db.commit()
+
     return IngestionReceipt(event_id=event.event_id)

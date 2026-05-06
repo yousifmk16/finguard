@@ -15,6 +15,7 @@ from app.db.base import Base
 import app.db.models.billing_event  # noqa: F401 — registers model with Base.metadata
 import app.db.models.anomaly  # noqa: F401 — registers model with Base.metadata
 import app.db.models.alert  # noqa: F401 — registers model with Base.metadata
+import app.db.models.audit_log  # noqa: F401 — registers model with Base.metadata
 
 config = context.config
 fileConfig(config.config_file_name)

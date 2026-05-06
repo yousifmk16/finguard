@@ -2,12 +2,14 @@ import { Link, useParams } from "react-router-dom";
 import SeverityBadge from "@/components/common/SeverityBadge";
 import StatusBadge from "@/components/common/StatusBadge";
 import { formatDateTime, formatScore } from "@/lib/formatters";
-import { useAnomaly } from "./useAnomaly";
+import StatusActions from "./StatusActions";
+import { useAnomaly, type AnomalyDetailState } from "./useAnomaly";
 import type { AnomalyRecord } from "./types";
 
 export default function AnomalyDetailPage() {
   const { anomalyId } = useParams<{ anomalyId: string }>();
-  const { data, loading, error, notFound, reload } = useAnomaly(anomalyId);
+  const detail = useAnomaly(anomalyId);
+  const { data, loading, error, notFound, reload } = detail;
 
   return (
     <section className="anomaly-detail">
@@ -35,7 +37,7 @@ export default function AnomalyDetailPage() {
         </div>
       ) : null}
 
-      {data ? <AnomalyDetailContent anomaly={data} /> : null}
+      {data ? <AnomalyDetailContent anomaly={data} detail={detail} /> : null}
     </section>
   );
 }
@@ -59,7 +61,13 @@ function Breadcrumbs({ anomalyId }: { anomalyId: string | undefined }) {
   );
 }
 
-function AnomalyDetailContent({ anomaly }: { anomaly: AnomalyRecord }) {
+function AnomalyDetailContent({
+  anomaly,
+  detail,
+}: {
+  anomaly: AnomalyRecord;
+  detail: AnomalyDetailState;
+}) {
   const breakdownEntries = Object.entries(anomaly.score_breakdown ?? {});
   const explanation = pluckExplanation(anomaly.score_breakdown);
 
@@ -110,12 +118,14 @@ function AnomalyDetailContent({ anomaly }: { anomaly: AnomalyRecord }) {
         <section className="card">
           <header className="card__header">
             <h2>Lifecycle Actions</h2>
-            <span className="card__task-tag">UI-08</span>
           </header>
-          <p className="card__empty">
-            Acknowledge, dismiss, and resolve controls land in UI-08 against
-            <code> PATCH /api/v1/anomalies/{"{id}"}/status</code>.
-          </p>
+          <StatusActions
+            current={anomaly.status}
+            mutating={detail.mutating}
+            mutationError={detail.mutationError}
+            onUpdate={detail.updateStatus}
+            onClearError={detail.clearMutationError}
+          />
         </section>
 
         <section className="card">

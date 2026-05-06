@@ -1,6 +1,11 @@
-"""API-05: Response schema for the KPI summary endpoint."""
+"""
+API-05: Response schema for the KPI summary endpoint.
+UI-06: Response schema for the KPI trend endpoint.
+"""
 
 from __future__ import annotations
+
+from datetime import date
 
 from pydantic import BaseModel
 
@@ -29,3 +34,17 @@ class KpiSummaryResponse(BaseModel):
     anomalies_last_24h: int
     top_services: list[ServiceCount]
     top_accounts: list[AccountCount]
+
+
+class TrendPoint(BaseModel):
+    """One day in the daily anomaly-count trend."""
+
+    day: date
+    count: int
+
+
+class KpiTrendResponse(BaseModel):
+    """UI-06: Daily anomaly counts for the trend sparkline."""
+
+    days: int
+    points: list[TrendPoint]

@@ -22,6 +22,9 @@ export interface AnomalyListResponse {
   pages: number;
 }
 
+export type AnomalySortField = "detected_at" | "bucket" | "anomaly_score" | "severity";
+export type AnomalySortOrder = "asc" | "desc";
+
 export interface AnomalyListQuery {
   page?: number;
   pageSize?: number;
@@ -32,4 +35,6 @@ export interface AnomalyListQuery {
   status?: AnomalyStatus;
   fromBucket?: string;
   toBucket?: string;
+  sort?: AnomalySortField;
+  order?: AnomalySortOrder;
 }

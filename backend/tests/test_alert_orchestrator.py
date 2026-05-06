@@ -1,12 +1,16 @@
 """Unit tests for ALT-01: AlertOrchestrator.
 
 No Redis or DB required — broker, session, channels and cooldown are all
-injected as mocks or stubs.
+injected as mocks or stubs. ``redis`` is itself an optional dependency
+that the broker module imports unconditionally; we install a tiny stub in
+``sys.modules`` so these tests run in any environment.
 """
 
 from __future__ import annotations
 
 import json
+import sys
+import types
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -14,10 +18,27 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-from app.alerts.cooldown import CooldownTracker
-from app.alerts.orchestrator import AlertOrchestrator
-from app.alerts.retry import RetryPolicy
-from services.stream.broker_interface import BrokerMessage
+
+# TST-03: stub the optional ``redis`` package so importing
+# ``services.stream.broker_interface`` (and anything that re-exports from
+# ``services.stream``) does not require an actual Redis client install.
+if "redis" not in sys.modules:
+    redis_stub = types.ModuleType("redis")
+    redis_stub.Redis = type("Redis", (), {})  # type: ignore[attr-defined]
+    exceptions_stub = types.ModuleType("redis.exceptions")
+    exceptions_stub.RedisError = type("RedisError", (Exception,), {})  # type: ignore[attr-defined]
+    exceptions_stub.ResponseError = type(  # type: ignore[attr-defined]
+        "ResponseError", (exceptions_stub.RedisError,), {}
+    )
+    redis_stub.exceptions = exceptions_stub  # type: ignore[attr-defined]
+    sys.modules["redis"] = redis_stub
+    sys.modules["redis.exceptions"] = exceptions_stub
+
+
+from app.alerts.cooldown import CooldownTracker  # noqa: E402
+from app.alerts.orchestrator import AlertOrchestrator  # noqa: E402
+from app.alerts.retry import RetryPolicy  # noqa: E402
+from services.stream.broker_interface import BrokerMessage  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

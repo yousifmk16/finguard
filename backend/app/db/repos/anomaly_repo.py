@@ -36,7 +36,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pandas as pd
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.db.models.anomaly import AnomalyRow
@@ -45,6 +45,21 @@ logger = logging.getLogger(__name__)
 
 # Column name written by ScoreBreakdownBuilder (EXP-03)
 _BREAKDOWN_COL = "exp_breakdown"
+
+# UI-05: whitelist of sortable columns. Severity is mapped through a CASE
+# expression so high > medium > low > none orders intuitively rather than
+# alphabetically (where "high" would sort below "low").
+_SORT_COLUMNS = {
+    "detected_at": AnomalyRow.detected_at,
+    "bucket": AnomalyRow.bucket,
+    "anomaly_score": AnomalyRow.anomaly_score,
+    "severity": case(
+        (AnomalyRow.severity == "high", 3),
+        (AnomalyRow.severity == "medium", 2),
+        (AnomalyRow.severity == "low", 1),
+        else_=0,
+    ),
+}
 
 
 class AnomalyRepository:
@@ -133,6 +148,8 @@ class AnomalyRepository:
         status: str | None = None,
         from_bucket: datetime | None = None,
         to_bucket: datetime | None = None,
+        sort: str = "detected_at",
+        order: str = "desc",
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[AnomalyRow], int]:
@@ -147,6 +164,11 @@ class AnomalyRepository:
             Optional equality filters.
         from_bucket, to_bucket:
             Optional inclusive range filter on the ``bucket`` datetime column.
+        sort:
+            Column to sort by. Must be one of ``_SORT_COLUMNS`` keys; unknown
+            values fall back to ``detected_at`` so a stale URL never 500s.
+        order:
+            ``asc`` or ``desc``; anything else falls back to ``desc``.
         page:
             1-indexed page number.
         page_size:
@@ -181,9 +203,13 @@ class AnomalyRepository:
 
         total: int = session.execute(count_stmt).scalar_one()
 
+        sort_col = _SORT_COLUMNS.get(sort, AnomalyRow.detected_at)
+        direction = sort_col.asc() if order == "asc" else sort_col.desc()
+        # Tiebreak on anomaly_id so paging is stable when many rows share
+        # the primary sort value (common for severity sort).
         rows_stmt = (
             rows_stmt
-            .order_by(AnomalyRow.detected_at.desc())
+            .order_by(direction, AnomalyRow.anomaly_id.asc())
             .offset((page - 1) * page_size)
             .limit(page_size)
         )
@@ -246,6 +272,35 @@ class AnomalyRepository:
             return None
         row.status = status
         return row
+
+    def kpi_trend(self, session: Session, days: int) -> list[dict]:
+        """
+        UI-06: Daily anomaly counts for the trailing ``days`` days, ending today.
+
+        Returns a list of ``{day, count}`` dicts, one per day in chronological
+        order. Days with zero anomalies are included (count = 0) so the front
+        end can render a continuous sparkline without gap-filling itself.
+        """
+        if days < 1:
+            return []
+
+        today = datetime.now(tz=UTC).date()
+        start_dt = datetime.combine(
+            today - timedelta(days=days - 1), datetime.min.time(), tzinfo=UTC
+        )
+
+        day_col = func.date(AnomalyRow.detected_at).label("day")
+        rows = session.execute(
+            select(day_col, func.count())
+            .where(AnomalyRow.detected_at >= start_dt)
+            .group_by(day_col)
+        ).all()
+
+        counts: dict = {row[0]: row[1] for row in rows}
+        return [
+            {"day": today - timedelta(days=offset), "count": counts.get(today - timedelta(days=offset), 0)}
+            for offset in range(days - 1, -1, -1)
+        ]
 
     def kpi_summary(self, session: Session) -> dict:
         """

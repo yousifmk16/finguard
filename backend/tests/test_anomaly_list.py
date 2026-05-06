@@ -228,3 +228,18 @@ class TestAnomalyListQueryValidation:
             "&page=2&page_size=10"
         )
         assert r.status_code == 200
+
+    def test_all_valid_sort_fields_accepted(self) -> None:
+        for field in ("detected_at", "bucket", "anomaly_score", "severity"):
+            r = client.get(f"/api/v1/anomalies?sort={field}")
+            assert r.status_code == 200, f"sort={field!r} unexpectedly rejected"
+
+    def test_invalid_sort_rejected(self) -> None:
+        assert client.get("/api/v1/anomalies?sort=account_id").status_code == 422
+
+    def test_valid_orders_accepted(self) -> None:
+        for o in ("asc", "desc"):
+            assert client.get(f"/api/v1/anomalies?order={o}").status_code == 200
+
+    def test_invalid_order_rejected(self) -> None:
+        assert client.get("/api/v1/anomalies?order=sideways").status_code == 422

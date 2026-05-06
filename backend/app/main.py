@@ -1,5 +1,8 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.alerts import router as alerts_router
 from app.api.anomalies import router as anomalies_router
@@ -59,6 +62,27 @@ app = FastAPI(
     openapi_tags=_TAGS,
     docs_url="/docs",
     redoc_url="/redoc",
+)
+
+# INT-01: Allow the deployed frontend to call the API cross-origin.
+# Origins are read from FINGUARD_CORS_ORIGINS as a comma-separated list, e.g.
+#     FINGUARD_CORS_ORIGINS="https://app.finguard.io,https://staging.finguard.io"
+# Defaults cover Vite dev (port 3000) and the alternate localhost form so the
+# zero-config local workflow keeps working out of the box.
+_DEFAULT_CORS_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
+_cors_origins = [
+    origin.strip()
+    for origin in os.getenv("FINGUARD_CORS_ORIGINS", _DEFAULT_CORS_ORIGINS).split(",")
+    if origin.strip()
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials=True,
+    # The bearer token in Authorization is the only auth header the UI sends,
+    # but methods cover the PATCH used by anomaly status updates (API-03).
+    allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
 app.add_exception_handler(RequestValidationError, validation_error_handler)

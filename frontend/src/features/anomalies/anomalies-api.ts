@@ -12,6 +12,8 @@ function buildQueryString(query: AnomalyListQuery): string {
   if (query.status) params.set("status", query.status);
   if (query.fromBucket) params.set("from_bucket", query.fromBucket);
   if (query.toBucket) params.set("to_bucket", query.toBucket);
+  if (query.sort) params.set("sort", query.sort);
+  if (query.order) params.set("order", query.order);
   const qs = params.toString();
   return qs ? `?${qs}` : "";
 }
@@ -33,4 +35,18 @@ export function getAnomaly(
   signal?: AbortSignal,
 ): Promise<AnomalyRecord> {
   return apiFetch<AnomalyRecord>(`/anomalies/${anomalyId}`, { token, signal });
+}
+
+export function updateAnomalyStatus(
+  anomalyId: string,
+  status: "open" | "acknowledged" | "resolved" | "suppressed",
+  token: string | null,
+  signal?: AbortSignal,
+): Promise<AnomalyRecord> {
+  return apiFetch<AnomalyRecord>(`/anomalies/${anomalyId}/status`, {
+    method: "PATCH",
+    body: { status },
+    token,
+    signal,
+  });
 }

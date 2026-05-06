@@ -17,6 +17,11 @@ Filters (all optional, combined with AND):
     from_bucket  – include anomalies with bucket >= this datetime (ISO-8601)
     to_bucket    – include anomalies with bucket <= this datetime (ISO-8601)
 
+Sorting (UI-05):
+    sort   – one of: detected_at | bucket | anomaly_score | severity
+             (default: detected_at)
+    order  – asc | desc (default: desc)
+
 Pagination:
     page         – 1-indexed page number (default 1)
     page_size    – rows per page, 1–200 (default 50)
@@ -63,6 +68,8 @@ _repo = AnomalyRepository()
 
 _Severity = Literal["none", "low", "medium", "high"]
 _Status = Literal["open", "acknowledged", "resolved", "suppressed"]
+_SortField = Literal["detected_at", "bucket", "anomaly_score", "severity"]
+_SortOrder = Literal["asc", "desc"]
 
 
 @router.get(
@@ -88,6 +95,12 @@ def list_anomalies(
     to_bucket: datetime | None = Query(
         None, description="Include buckets at or before this datetime (ISO-8601)"
     ),
+    sort: _SortField = Query(
+        "detected_at", description="Column to sort by"
+    ),
+    order: _SortOrder = Query(
+        "desc", description="Sort direction"
+    ),
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(50, ge=1, le=200, description="Results per page (max 200)"),
 ) -> AnomalyListResponse:
@@ -111,6 +124,8 @@ def list_anomalies(
         status=status,
         from_bucket=from_bucket,
         to_bucket=to_bucket,
+        sort=sort,
+        order=order,
         page=page,
         page_size=page_size,
     )

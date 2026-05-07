@@ -6,5 +6,21 @@ requires-python = ">=3.11"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-q --tb=short"
 pythonpath = [".", ".."]
+markers = [
+    "unit: isolated unit tests with no external I/O",
+    "integration: multi-component integration tests",
+    "api: HTTP layer and API contract tests",
+    "security: authentication, RBAC, and security tests",
+    "smoke: fast sanity checks run on every build",
+    "regression: full regression suite — all tests must pass",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["*/alembic/*", "*/migrations/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false

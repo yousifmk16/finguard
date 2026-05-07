@@ -1,0 +1,112 @@
+{
+  "generated_at": "2026-05-07T23:28:07.609744+00:00",
+  "n_rows": 3000,
+  "model_meta": {
+    "latest_version": null,
+    "trained_at": null,
+    "train_rows": 0,
+    "lookback_days": 0,
+    "n_versions": 0,
+    "baseline_loaded": false,
+    "if_loaded": false
+  },
+  "score_stats": [
+    {
+      "col": "anomaly_score",
+      "n_valid": 3000,
+      "mean": 0.11094168098123733,
+      "std": 0.14009341052759589,
+      "p25": 0.04081754410994876,
+      "p50": 0.08434351310900952,
+      "p75": 0.13690318214751926,
+      "p90": 0.1814547850899809,
+      "p95": 0.21352552868708177,
+      "p99": 1.0,
+      "max": 1.0
+    }
+  ],
+  "detection": {
+    "n_total": 3000,
+    "n_flagged": 108,
+    "pct_flagged": 3.6,
+    "threshold": 0.3,
+    "sensitivity": [
+      {
+        "threshold": 0.3,
+        "n_flagged": 108,
+        "pct_flagged": 3.6
+      },
+      {
+        "threshold": 0.4,
+        "n_flagged": 99,
+        "pct_flagged": 3.3
+      },
+      {
+        "threshold": 0.45,
+        "n_flagged": 94,
+        "pct_flagged": 3.1333333333333333
+      },
+      {
+        "threshold": 0.5,
+        "n_flagged": 89,
+        "pct_flagged": 2.966666666666667
+      },
+      {
+        "threshold": 0.55,
+        "n_flagged": 69,
+        "pct_flagged": 2.3
+      },
+      {
+        "threshold": 0.6,
+        "n_flagged": 65,
+        "pct_flagged": 2.1666666666666665
+      },
+      {
+        "threshold": 0.7,
+        "n_flagged": 56,
+        "pct_flagged": 1.8666666666666667
+      },
+      {
+        "threshold": 0.8,
+        "n_flagged": 48,
+        "pct_flagged": 1.6
+      }
+    ]
+  },
+  "supervised": {
+    "n_samples": 3000,
+    "n_true_anomalies": 148,
+    "true_anomaly_rate": 4.9333,
+    "precision": 1.0,
+    "recall": 0.72973,
+    "f1": 0.84375,
+    "accuracy": 0.986667,
+    "tp": 108,
+    "fp": 0,
+    "fn": 40,
+    "tn": 2852
+  },
+  "type_breakdown": [
+    {
+      "anomaly_type": "budget_breach",
+      "n_total": 50,
+      "n_detected": 15,
+      "recall": 0.3
+    },
+    {
+      "anomaly_type": "spike",
+      "n_total": 98,
+      "n_detected": 93,
+      "recall": 0.94898
+    }
+  ],
+  "signal_contributions": [
+    {
+      "signal": "anomaly_score",
+      "mean_normal": 0.088058,
+      "mean_anomaly": 0.551908,
+      "separation": 0.46385
+    }
+  ],
+  "tuning": null
+}

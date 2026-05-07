@@ -9,9 +9,17 @@ from app.api.anomalies import router as anomalies_router
 from app.api.audit import router as audit_router
 from app.api.auth import router as auth_router
 from app.api.detection import router as detection_router
+from app.api.health import router as health_router
 from app.api.ingestion import router as ingestion_router
 from app.api.kpi import router as kpi_router
+from app.api.metrics import router as metrics_router
 from app.core.errors import validation_error_handler
+from app.core.logging_config import configure_logging
+from app.core.metrics_middleware import MetricsMiddleware
+from app.core.middleware import RequestIdMiddleware
+
+# OPS-02: install structured logging before any module-level loggers fire.
+configure_logging()
 
 # API-06: tag descriptions shown in /docs
 _TAGS = [
@@ -34,6 +42,10 @@ _TAGS = [
     {
         "name": "kpi",
         "description": "Aggregated KPI statistics for the dashboard (API-05).",
+    },
+    {
+        "name": "health",
+        "description": "Aggregate service health check (OPS-01). Used by load balancers and container orchestrators.",
     },
     {
         "name": "detection",
@@ -82,10 +94,19 @@ app.add_middleware(
     # The bearer token in Authorization is the only auth header the UI sends,
     # but methods cover the PATCH used by anomaly status updates (API-03).
     allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Accept"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Request-ID"],
+    # OPS-02: clients can read the request id off the response for support tickets.
+    expose_headers=["X-Request-ID"],
 )
+# OPS-02: stamp every request/response with a trace id and bind it to logs.
+app.add_middleware(RequestIdMiddleware)
+# OPS-03: record HTTP request metrics for /metrics scraping. Added last so
+# it sits outermost — it observes every request that reaches the app.
+app.add_middleware(MetricsMiddleware)
 
 app.add_exception_handler(RequestValidationError, validation_error_handler)
+app.include_router(health_router)
+app.include_router(metrics_router)
 app.include_router(auth_router)
 app.include_router(ingestion_router)
 app.include_router(anomalies_router)
@@ -93,8 +114,3 @@ app.include_router(alerts_router)
 app.include_router(kpi_router)
 app.include_router(detection_router)
 app.include_router(audit_router)
-
-
-@app.get("/health", tags=["detection"])
-def health() -> dict[str, str]:
-    return {"status": "ok"}

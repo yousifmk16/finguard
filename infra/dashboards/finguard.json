@@ -1,0 +1,179 @@
+{
+  "title": "FinGuard — Service Overview",
+  "uid": "finguard-overview",
+  "tags": ["finguard", "ops-03"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": { "text": "Prometheus", "value": "Prometheus" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Batches processed",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "finguard_batches_processed_total", "legendFormat": "batches" }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "short" }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Anomalies detected",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "targets": [
+        { "expr": "finguard_anomalies_detected_total", "legendFormat": "detected" }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "short" }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Anomalies persisted",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "targets": [
+        { "expr": "finguard_anomalies_persisted_total", "legendFormat": "persisted" }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "short" }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Pipeline errors (total)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "finguard_errors_scoring_total + finguard_errors_persist_total + finguard_errors_emit_total",
+          "legendFormat": "errors"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Rows scored — rate (per sec)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [
+        {
+          "expr": "rate(finguard_rows_scored_total[5m])",
+          "legendFormat": "rows/sec"
+        },
+        {
+          "expr": "rate(finguard_anomalies_detected_total[5m])",
+          "legendFormat": "anomalies/sec"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Pipeline errors by component (rate)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        { "expr": "rate(finguard_errors_scoring_total[5m])", "legendFormat": "scoring" },
+        { "expr": "rate(finguard_errors_persist_total[5m])", "legendFormat": "persist" },
+        { "expr": "rate(finguard_errors_emit_total[5m])", "legendFormat": "emit" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "errs", "color": { "mode": "palette-classic" } }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "HTTP request rate by route",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "expr": "sum by (path) (rate(finguard_http_requests_total[5m]))",
+          "legendFormat": "{{path}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "HTTP avg latency by route (sec)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        {
+          "expr": "rate(finguard_http_request_duration_seconds_sum[5m]) / rate(finguard_http_request_duration_seconds_count[5m])",
+          "legendFormat": "{{method}} {{path}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "HTTP errors (5xx) by route",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+      "targets": [
+        {
+          "expr": "sum by (path, status) (rate(finguard_http_requests_total{status=~\"5..\"}[5m]))",
+          "legendFormat": "{{path}} → {{status}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Last batch — rows",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 28 },
+      "targets": [{ "expr": "finguard_last_batch_rows", "legendFormat": "rows" }]
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Last batch — anomalies",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 28 },
+      "targets": [
+        { "expr": "finguard_last_batch_anomalies", "legendFormat": "anomalies" }
+      ]
+    }
+  ]
+}

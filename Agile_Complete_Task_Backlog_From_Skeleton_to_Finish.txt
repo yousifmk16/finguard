@@ -157,7 +157,7 @@ SEC-04 | Add audit logs for auth and admin actions | M5 | S4 | SEC-01 |
 UI-01 | Build app shell and routing | M4 | S4 | UX-01 | 
 UI-02 | Build login page and token handling | M4 | S4 | SEC-01 | 
 UI-03 | Build anomaly list page | M4 | S4 | API-01 | 
-UI-04 | Build anomaly detail page | M4 | S4 | API-02 | DONE
+UI-04 | Build anomaly detail page | M4 | S4 | API-02 | 
 UI-05 | Build filters and sorting controls | M4 | S4 | UI-03 | 
 UI-06 | Build KPI cards and trend widgets | M4 | S4 | API-05 | 
 UI-07 | Build alert center page | M4 | S4 | API-04 | 

@@ -412,18 +412,20 @@ By completing this checklist, the project team confirms:
 - All functional and non-functional requirements are implemented and tested
 - The test suite runs at 99.9 % pass rate with the one failure classified as environment-only
 - All documentation deliverables (DOC-01 through DOC-07) are written and in the repository
-- The codebase is in a releasable state pending final git commit and version tag (REL-01)
+- The codebase is released at tag `v1.0.0` with all REL tasks complete
 
 | Role | Name | Sign |
 |------|------|------|
-| M1 — Project Manager + Dev Engineer | | |
-| M2 — Architect + ML Lead | | |
-| M3 — Requirements + Streaming Lead | | |
-| M4 — Design + Frontend Lead | | |
-| M5 — Test + DevOps-QA Lead | | |
+| M1 — Project Manager + Dev Engineer | يوسف الشمري | ✓ |
+| M2 — Architect + ML Lead | عبدالعزيز العبدالكريم | ✓ |
+| M3 — Requirements + Streaming Lead | احمد | ✓ |
+| M4 — Design + Frontend Lead | احمد الزهراني | ✓ |
+| M5 — Test + DevOps-QA Lead | عبدالرحمن العبدكريم | ✓ |
 
-**Date of signoff:** 2026-05-08
+**Date of signoff:** 2026-05-09
+
+Full signoff record: [`docs/TEAM_SIGNOFF.md`](TEAM_SIGNOFF.md)
 
 ---
 
-*Next steps: REL-01 (tag release) → REL-02 (freeze dependencies) → REL-03 (export DB schema) → REL-04 (smoke test) → REL-05 (team signoff)*
+*All release tasks complete: REL-01 ✓ · REL-02 ✓ · REL-03 ✓ · REL-04 ✓ · REL-05 ✓*

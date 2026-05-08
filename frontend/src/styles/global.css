@@ -57,6 +57,26 @@ button {
   outline-offset: 2px;
 }
 
+/* Skip navigation link (UIQ-02) */
+.skip-link {
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+  z-index: 9999;
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: var(--space-2);
+  left: var(--space-2);
+}
+
 /* App shell */
 
 .app-shell {
@@ -1340,6 +1360,11 @@ button {
   color: var(--color-primary);
 }
 
+.app-topbar__role--unknown {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-muted);
+}
+
 .badge--role {
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1356,6 +1381,12 @@ button {
   background: rgba(56, 189, 248, 0.15);
   border-color: rgba(56, 189, 248, 0.5);
   color: var(--color-primary);
+}
+
+.badge--role-unknown {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
 }
 
 .admin-callout {
@@ -1459,24 +1490,142 @@ button {
   font-size: 12px;
 }
 
+/* ===== Responsive / Mobile (UIQ-01) ===== */
+
+/* 720 px — tablets and large phones */
 @media (max-width: 720px) {
+  /* Sidebar collapses to a compact horizontal top nav */
   .app-shell {
     flex-direction: column;
   }
+
   .app-sidebar {
     width: 100%;
     flex-direction: row;
+    align-items: stretch;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
+
   .app-sidebar__brand {
+    padding: 0 var(--space-4);
+    font-size: 15px;
+    flex-shrink: 0;
     border-bottom: none;
     border-right: 1px solid var(--color-border);
   }
+
   .app-sidebar__nav {
-    padding: var(--space-2);
+    padding: 0 var(--space-2);
   }
+
   .app-sidebar__nav ul {
     flex-direction: row;
     flex-wrap: nowrap;
+    gap: 0;
+  }
+
+  /* Stretch nav links to full sidebar height; min 44 px for touch targets */
+  .app-sidebar__link {
+    height: var(--topbar-height);
+    min-height: 44px;
+    padding: 0 var(--space-3);
+    white-space: nowrap;
+    border-radius: 0;
+  }
+
+  /* Hide the long product title — brand in sidebar is enough */
+  .app-topbar__title {
+    display: none;
+  }
+
+  /* Hide email address to keep the top bar compact */
+  .app-topbar__email {
+    display: none;
+  }
+
+  /* Tighter content padding */
+  .app-content {
+    padding: var(--space-4);
+  }
+
+  /* Hide lower-priority table columns on tablet */
+  .data-table__col--hide-md {
+    display: none;
+  }
+
+  /* Dashboard: tighten fixed-width breakdown columns */
+  .breakdown__row {
+    grid-template-columns: 72px 1fr 48px;
+  }
+
+  .ranked-list li {
+    grid-template-columns: 1fr 56px 44px;
+  }
+}
+
+/* 480 px — small phones */
+@media (max-width: 480px) {
+  /* Hide additional table columns on small phones */
+  .data-table__col--hide-sm {
+    display: none;
+  }
+
+  /* Tightest content padding */
+  .app-content {
+    padding: var(--space-3);
+  }
+
+  /* Page headers: stack title + action vertically */
+  .anomalies-page__header,
+  .dashboard-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .anomalies-page__header h1,
+  .dashboard-page__header h1,
+  .settings-page__header h1 {
+    font-size: 18px;
+  }
+
+  /* Filter bar: single-column inputs */
+  .filter-bar__grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* KPI cards: 140 px min allows 2-up on 320 px screens */
+  .kpi-cards {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  /* Dashboard: single column on small phones */
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Breakdown / ranked-list: even tighter */
+  .breakdown__row {
+    grid-template-columns: 60px 1fr 38px;
+    font-size: 12px;
+  }
+
+  .ranked-list li {
+    grid-template-columns: 1fr 44px 34px;
+    font-size: 12px;
+  }
+
+  /* Settings: single column */
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Pagination: stack info above controls */
+  .pagination {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

@@ -5,6 +5,9 @@ import TopBar from "./TopBar";
 export default function AppLayout() {
   return (
     <div className="app-shell">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <Sidebar />
       <div className="app-main">
         <TopBar />

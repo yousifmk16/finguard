@@ -17,8 +17,12 @@ export default function Sparkline({
 }: Props) {
   if (points.length === 0) {
     return (
-      <div className="sparkline sparkline--empty" role="img" aria-label={ariaLabel}>
-        No data
+      <div
+        className="sparkline sparkline--empty"
+        role="img"
+        aria-label={`${ariaLabel}: no data`}
+      >
+        <span aria-hidden="true">No data</span>
       </div>
     );
   }

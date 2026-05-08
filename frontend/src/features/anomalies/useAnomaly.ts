@@ -43,6 +43,7 @@ export function useAnomaly(anomalyId: string | undefined): AnomalyDetailState {
 
     const controller = new AbortController();
     let cancelled = false;
+    setData(null);
     setLoading(true);
     setError(null);
     setNotFound(false);

@@ -1,10 +1,43 @@
 flowchart TD
-  A[Windowed Account Data] --> B[Time-Series Score]
-  A --> C[Isolation Forest Score]
-  A --> D[Rule Score]
-  B --> E[Weighted Fusion]
-  C --> E
-  D --> E
-  E --> F[Severity + Explanation]
-  F --> G[Persist Anomaly]
-  F --> H[Trigger Alerts]
+  A["1-minute aggregate row\n(account_id, service, region, total_cost)"]
+
+  subgraph ts["TS-03  Time-Series Signal"]
+    B["Per-account rolling µ / σ\n(FEA-01 features)"]
+    C["Z-score → clip Z_CAP=5\n→ normalise to [0, 1]"]
+    B --> C
+  end
+
+  subgraph ifo["ML-01  Isolation Forest"]
+    D["IsolationForest\n(trained on clean baseline)"]
+    E["score_samples → [0, 1]\n(NaN when model absent)"]
+    D --> E
+  end
+
+  subgraph rules["RUL-01/02/03  Rule Engine"]
+    F["threshold_breach\nw=0.50  budget > 1000"]
+    G["sudden_jump\nw=0.30  Δcost > 50 %"]
+    H["sustained_increase\nw=0.20  3 rising periods"]
+    I["Blended rule_score\n∈ [0, 1]"]
+    F & G & H --> I
+  end
+
+  subgraph ens["ENS-01  Weighted Fusion"]
+    J["anomaly_score = Σ(wᵢ·sᵢ) / Σwᵢ\n(weights renormalise if signal = NaN)"]
+  end
+
+  subgraph exp["EXP-01..04  Explanation Stack"]
+    K["EXP-01  ForecastExplanation\nresidual, direction, CI-95"]
+    L["EXP-02  RuleExplanation\nper-rule fired flags + margins"]
+    M["EXP-03  ScoreBreakdown\nweighted component table"]
+    N["EXP-04  AnomalyExplanationResponse\nPydantic API schema"]
+    K & L --> M --> N
+  end
+
+  A --> B
+  A --> D
+  A --> F & G & H
+  C --> J
+  E --> J
+  I --> J
+  J --> K & L
+  N --> O["Persist to anomalies table\n+ emit anomaly-events"]

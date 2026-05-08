@@ -185,10 +185,10 @@ export default function AnomaliesListPage() {
     order !== DEFAULT_ORDER;
 
   return (
-    <section className="anomalies-page">
+    <section className="anomalies-page" aria-labelledby="anomalies-heading">
       <header className="anomalies-page__header">
         <div>
-          <h1>Anomalies</h1>
+          <h1 id="anomalies-heading">Anomalies</h1>
           <p className="anomalies-page__subtitle">
             Active and historical anomalies detected across cloud accounts.
           </p>
@@ -225,8 +225,8 @@ export default function AnomaliesListPage() {
             <tr>
               <th scope="col">ID</th>
               <th scope="col">Account</th>
-              <th scope="col">Service</th>
-              <th scope="col">Region</th>
+              <th scope="col" className="data-table__col--hide-sm">Service</th>
+              <th scope="col" className="data-table__col--hide-md">Region</th>
               <SortHeader
                 label="Score"
                 field="anomaly_score"
@@ -249,6 +249,7 @@ export default function AnomaliesListPage() {
                 currentSort={sort}
                 currentOrder={order}
                 onSort={handleSort}
+                className="data-table__col--hide-md"
               />
               <th scope="col" aria-label="Actions" />
             </tr>
@@ -344,13 +345,17 @@ function AnomalyRow({ row }: { row: AnomalyRecord }) {
   return (
     <tr>
       <td>
-        <Link to={`/anomalies/${row.anomaly_id}`} title={row.anomaly_id}>
+        <Link
+          to={`/anomalies/${row.anomaly_id}`}
+          title={row.anomaly_id}
+          aria-label={`Anomaly ${shortId(row.anomaly_id)}`}
+        >
           {shortId(row.anomaly_id)}
         </Link>
       </td>
       <td>{row.account_id}</td>
-      <td>{row.service}</td>
-      <td>{row.region}</td>
+      <td className="data-table__col--hide-sm">{row.service}</td>
+      <td className="data-table__col--hide-md">{row.region}</td>
       <td className="data-table__col-num">{formatScore(row.anomaly_score)}</td>
       <td>
         <SeverityBadge severity={row.severity} />
@@ -358,9 +363,14 @@ function AnomalyRow({ row }: { row: AnomalyRecord }) {
       <td>
         <StatusBadge status={row.status} />
       </td>
-      <td>{formatDateTime(row.detected_at)}</td>
+      <td className="data-table__col--hide-md">{formatDateTime(row.detected_at)}</td>
       <td className="data-table__col-action">
-        <Link to={`/anomalies/${row.anomaly_id}`}>View detail</Link>
+        <Link
+          to={`/anomalies/${row.anomaly_id}`}
+          aria-label={`View detail for anomaly ${shortId(row.anomaly_id)}`}
+        >
+          View detail
+        </Link>
       </td>
     </tr>
   );

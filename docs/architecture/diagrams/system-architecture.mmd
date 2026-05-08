@@ -1,11 +1,51 @@
 flowchart LR
-  A[Synthetic Generator] --> B[Ingestion API]
-  B --> C[Stream Broker]
-  C --> D[Detection Service]
-  D --> E[(PostgreSQL)]
-  D --> F[(Redis)]
-  D --> G[Alert Service]
-  G --> H[In-App Alerts]
-  G --> I[Email Alerts]
-  E --> J[Backend API]
-  J --> K[Web Dashboard]
+  subgraph gen["Data Sources"]
+    A["Synthetic Generator\n(generators/)"]
+  end
+
+  subgraph ingest["Ingestion Layer  ING-01/02/03"]
+    B["Ingestion API\n/api/v1/events"]
+    C[("billing_events_raw\nPostgreSQL")]
+    D["Redis Streams\nbilling-events"]
+    B --> C
+    B --> D
+  end
+
+  subgraph detect["Detection Layer  DET-01/ENS-01"]
+    E["Stream Consumer\nservices/stream/consumer.py"]
+    F["Feature Pipeline\nFEA-01 / FEA-04"]
+    G["OnlineScorer\nts_signal · if_score · rule_score"]
+    H["Explanation Stack\nEXP-01..04"]
+    I[("anomalies\nPostgreSQL")]
+    J["Redis Streams\nanomaly-events"]
+    E --> F --> G --> H
+    H --> I
+    H --> J
+  end
+
+  subgraph alert["Alert Layer  ALT-01/02/03"]
+    K["Alert Orchestrator\napp/alerts/orchestrator.py"]
+    L[("alerts\nPostgreSQL")]
+    M["In-App Channel"]
+    N["Email Channel\nSMTP / API"]
+    K --> L
+    K --> M
+    K --> N
+  end
+
+  subgraph api["Backend API  FastAPI 0.115"]
+    O["REST API\n:8000"]
+    P["Redis Cache\n:6379"]
+    O <--> P
+  end
+
+  subgraph frontend["Frontend  React 18 + Vite"]
+    Q["Web Dashboard\n:3000"]
+  end
+
+  A --> B
+  D --> E
+  J --> K
+  I --> O
+  L --> O
+  O --> Q

@@ -1,0 +1,519 @@
+{
+  "generated_at": "2026-05-08T13:09:20.690960+00:00",
+  "threshold": 0.3,
+  "threshold_source": "`threshold_calibration.json` (MLQ-01)",
+  "n_rows": 3000,
+  "headline": {
+    "threshold": 0.3,
+    "n_total": 3000,
+    "n_normal": 2852,
+    "n_anomaly": 148,
+    "tp": 108,
+    "fp": 0,
+    "fn": 40,
+    "tn": 2852,
+    "precision": 1.0,
+    "recall": 0.72973,
+    "false_positive_rate": 0.0
+  },
+  "realised_false_positives": [],
+  "borderline_normals": [
+    {
+      "anomaly_score": 0.265084,
+      "cost_amount": 45.6664,
+      "account_id": "acct-dev-1",
+      "service": "Compute Engine",
+      "region": "us-east1",
+      "anomaly_type": "normal",
+      "timestamp": "2026-01-04T16:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.244253,
+      "cost_amount": 52.7429,
+      "account_id": "acct-dev-1",
+      "service": "BigQuery",
+      "region": "us-central1",
+      "anomaly_type": "normal",
+      "timestamp": "2026-01-07T15:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.235192,
+      "cost_amount": 538.5131,
+      "account_id": "acct-prod-1",
+      "service": "Compute Engine",
+      "region": "us-central1",
+      "anomaly_type": "normal",
+      "timestamp": "2026-05-02T06:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.233664,
+      "cost_amount": 537.2043,
+      "account_id": "acct-prod-1",
+      "service": "BigQuery",
+      "region": "europe-west1",
+      "anomaly_type": "normal",
+      "timestamp": "2026-05-01T05:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.230534,
+      "cost_amount": 57.4034,
+      "account_id": "acct-dev-1",
+      "service": "BigQuery",
+      "region": "us-central1",
+      "anomaly_type": "normal",
+      "timestamp": "2026-01-20T15:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.230091,
+      "cost_amount": 139.9902,
+      "account_id": "acct-prod-1",
+      "service": "Cloud Storage",
+      "region": "europe-west1",
+      "anomaly_type": "normal",
+      "timestamp": "2026-01-06T17:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.229572,
+      "cost_amount": 57.7302,
+      "account_id": "acct-dev-1",
+      "service": "Compute Engine",
+      "region": "us-central1",
+      "anomaly_type": "normal",
+      "timestamp": "2026-01-20T19:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.227534,
+      "cost_amount": 142.1797,
+      "account_id": "acct-prod-1",
+      "service": "Compute Engine",
+      "region": "us-east1",
+      "anomaly_type": "normal",
+      "timestamp": "2026-01-13T17:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.226383,
+      "cost_amount": 58.8135,
+      "account_id": "acct-dev-1",
+      "service": "BigQuery",
+      "region": "us-central1",
+      "anomaly_type": "normal",
+      "timestamp": "2026-01-04T22:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.22636,
+      "cost_amount": 143.1852,
+      "account_id": "acct-prod-1",
+      "service": "Cloud Storage",
+      "region": "us-east1",
+      "anomaly_type": "normal",
+      "timestamp": "2026-01-06T22:00:00+00:00"
+    }
+  ],
+  "sweep": [
+    {
+      "threshold": 0.05,
+      "n_flagged": 2090,
+      "fp": 1963,
+      "tp": 127,
+      "precision": 0.060766,
+      "fp_rate": 0.688289
+    },
+    {
+      "threshold": 0.1,
+      "n_flagged": 1269,
+      "fp": 1156,
+      "tp": 113,
+      "precision": 0.089046,
+      "fp_rate": 0.40533
+    },
+    {
+      "threshold": 0.15,
+      "n_flagged": 591,
+      "fp": 478,
+      "tp": 113,
+      "precision": 0.191201,
+      "fp_rate": 0.167602
+    },
+    {
+      "threshold": 0.2,
+      "n_flagged": 198,
+      "fp": 85,
+      "tp": 113,
+      "precision": 0.570707,
+      "fp_rate": 0.029804
+    },
+    {
+      "threshold": 0.25,
+      "n_flagged": 112,
+      "fp": 1,
+      "tp": 111,
+      "precision": 0.991071,
+      "fp_rate": 0.000351
+    },
+    {
+      "threshold": 0.3,
+      "n_flagged": 108,
+      "fp": 0,
+      "tp": 108,
+      "precision": 1.0,
+      "fp_rate": 0.0
+    },
+    {
+      "threshold": 0.35,
+      "n_flagged": 104,
+      "fp": 0,
+      "tp": 104,
+      "precision": 1.0,
+      "fp_rate": 0.0
+    },
+    {
+      "threshold": 0.4,
+      "n_flagged": 99,
+      "fp": 0,
+      "tp": 99,
+      "precision": 1.0,
+      "fp_rate": 0.0
+    },
+    {
+      "threshold": 0.45,
+      "n_flagged": 94,
+      "fp": 0,
+      "tp": 94,
+      "precision": 1.0,
+      "fp_rate": 0.0
+    },
+    {
+      "threshold": 0.5,
+      "n_flagged": 89,
+      "fp": 0,
+      "tp": 89,
+      "precision": 1.0,
+      "fp_rate": 0.0
+    },
+    {
+      "threshold": 0.55,
+      "n_flagged": 69,
+      "fp": 0,
+      "tp": 69,
+      "precision": 1.0,
+      "fp_rate": 0.0
+    },
+    {
+      "threshold": 0.6,
+      "n_flagged": 65,
+      "fp": 0,
+      "tp": 65,
+      "precision": 1.0,
+      "fp_rate": 0.0
+    },
+    {
+      "threshold": 0.7,
+      "n_flagged": 56,
+      "fp": 0,
+      "tp": 56,
+      "precision": 1.0,
+      "fp_rate": 0.0
+    },
+    {
+      "threshold": 0.8,
+      "n_flagged": 48,
+      "fp": 0,
+      "tp": 48,
+      "precision": 1.0,
+      "fp_rate": 0.0
+    }
+  ],
+  "slice_breakdowns": {
+    "account_id": [
+      {
+        "dimension": "account_id",
+        "value": "acct-dev-1",
+        "n_normal": 944,
+        "fp_at_current": 0,
+        "mean_score_normal": 0.090938,
+        "p95_score_normal": 0.196575,
+        "max_score_normal": 0.265084
+      },
+      {
+        "dimension": "account_id",
+        "value": "acct-prod-1",
+        "n_normal": 953,
+        "fp_at_current": 0,
+        "mean_score_normal": 0.087786,
+        "p95_score_normal": 0.18752,
+        "max_score_normal": 0.235192
+      },
+      {
+        "dimension": "account_id",
+        "value": "acct-prod-2",
+        "n_normal": 955,
+        "fp_at_current": 0,
+        "mean_score_normal": 0.085484,
+        "p95_score_normal": 0.182998,
+        "max_score_normal": 0.224691
+      }
+    ],
+    "service": [
+      {
+        "dimension": "service",
+        "value": "BigQuery",
+        "n_normal": 934,
+        "fp_at_current": 0,
+        "mean_score_normal": 0.089294,
+        "p95_score_normal": 0.183999,
+        "max_score_normal": 0.244253
+      },
+      {
+        "dimension": "service",
+        "value": "Cloud Storage",
+        "n_normal": 942,
+        "fp_at_current": 0,
+        "mean_score_normal": 0.087974,
+        "p95_score_normal": 0.189743,
+        "max_score_normal": 0.230091
+      },
+      {
+        "dimension": "service",
+        "value": "Compute Engine",
+        "n_normal": 976,
+        "fp_at_current": 0,
+        "mean_score_normal": 0.086957,
+        "p95_score_normal": 0.189281,
+        "max_score_normal": 0.265084
+      }
+    ],
+    "region": [
+      {
+        "dimension": "region",
+        "value": "us-central1",
+        "n_normal": 1004,
+        "fp_at_current": 0,
+        "mean_score_normal": 0.090463,
+        "p95_score_normal": 0.188944,
+        "max_score_normal": 0.244253
+      },
+      {
+        "dimension": "region",
+        "value": "europe-west1",
+        "n_normal": 915,
+        "fp_at_current": 0,
+        "mean_score_normal": 0.088437,
+        "p95_score_normal": 0.189484,
+        "max_score_normal": 0.233664
+      },
+      {
+        "dimension": "region",
+        "value": "us-east1",
+        "n_normal": 933,
+        "fp_at_current": 0,
+        "mean_score_normal": 0.0851,
+        "p95_score_normal": 0.18409,
+        "max_score_normal": 0.265084
+      }
+    ]
+  },
+  "missed_detections_by_type": [
+    {
+      "anomaly_type": "budget_breach",
+      "n_total": 50,
+      "n_missed": 35,
+      "miss_rate": 0.7,
+      "mean_score": 0.193076,
+      "max_score": 0.91181,
+      "min_score": 0.001452
+    },
+    {
+      "anomaly_type": "spike",
+      "n_total": 98,
+      "n_missed": 5,
+      "miss_rate": 0.05102,
+      "mean_score": 0.734986,
+      "max_score": 1.0,
+      "min_score": 0.200693
+    }
+  ],
+  "near_threshold_misses": [
+    {
+      "anomaly_score": 0.269259,
+      "cost_amount": 457.3226,
+      "account_id": "acct-prod-2",
+      "service": "Compute Engine",
+      "region": "us-central1",
+      "anomaly_type": "spike",
+      "timestamp": "2026-01-07T20:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.262614,
+      "cost_amount": 224.9336,
+      "account_id": "acct-dev-1",
+      "service": "Cloud Storage",
+      "region": "europe-west1",
+      "anomaly_type": "spike",
+      "timestamp": "2026-01-04T19:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.261284,
+      "cost_amount": 224.4817,
+      "account_id": "acct-dev-1",
+      "service": "Compute Engine",
+      "region": "us-east1",
+      "anomaly_type": "spike",
+      "timestamp": "2026-01-11T16:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.243754,
+      "cost_amount": 439.2901,
+      "account_id": "acct-prod-2",
+      "service": "BigQuery",
+      "region": "europe-west1",
+      "anomaly_type": "spike",
+      "timestamp": "2026-01-01T19:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.200693,
+      "cost_amount": 508.9647,
+      "account_id": "acct-prod-1",
+      "service": "Cloud Storage",
+      "region": "us-central1",
+      "anomaly_type": "spike",
+      "timestamp": "2026-01-05T21:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.08586,
+      "cost_amount": 410.6073,
+      "account_id": "acct-prod-1",
+      "service": "BigQuery",
+      "region": "us-east1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-06T06:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.058063,
+      "cost_amount": 308.0,
+      "account_id": "acct-prod-2",
+      "service": "Compute Engine",
+      "region": "europe-west1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-04T16:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.058063,
+      "cost_amount": 308.0,
+      "account_id": "acct-prod-2",
+      "service": "BigQuery",
+      "region": "europe-west1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-04T12:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.058063,
+      "cost_amount": 308.0,
+      "account_id": "acct-prod-2",
+      "service": "Cloud Storage",
+      "region": "europe-west1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-06T07:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.058063,
+      "cost_amount": 308.0,
+      "account_id": "acct-prod-2",
+      "service": "Cloud Storage",
+      "region": "us-east1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-06T04:00:00+00:00"
+    }
+  ],
+  "deeply_missed": [
+    {
+      "anomaly_score": 0.001452,
+      "cost_amount": 338.3109,
+      "account_id": "acct-prod-1",
+      "service": "BigQuery",
+      "region": "us-central1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-05T11:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.003714,
+      "cost_amount": 333.8862,
+      "account_id": "acct-prod-1",
+      "service": "BigQuery",
+      "region": "us-central1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-05T02:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.005433,
+      "cost_amount": 332.4135,
+      "account_id": "acct-prod-1",
+      "service": "Compute Engine",
+      "region": "us-central1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-06T00:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.006036,
+      "cost_amount": 331.8974,
+      "account_id": "acct-prod-1",
+      "service": "Cloud Storage",
+      "region": "us-east1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-05T23:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.013762,
+      "cost_amount": 325.2794,
+      "account_id": "acct-prod-1",
+      "service": "BigQuery",
+      "region": "europe-west1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-06T13:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.015319,
+      "cost_amount": 323.9464,
+      "account_id": "acct-prod-1",
+      "service": "BigQuery",
+      "region": "us-central1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-05T01:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.016631,
+      "cost_amount": 351.3118,
+      "account_id": "acct-prod-1",
+      "service": "BigQuery",
+      "region": "us-east1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-06T01:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.021891,
+      "cost_amount": 318.3168,
+      "account_id": "acct-prod-1",
+      "service": "Cloud Storage",
+      "region": "us-central1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-05T13:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.02467,
+      "cost_amount": 358.1973,
+      "account_id": "acct-prod-1",
+      "service": "Cloud Storage",
+      "region": "us-east1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-05T10:00:00+00:00"
+    },
+    {
+      "anomaly_score": 0.032817,
+      "cost_amount": 365.1755,
+      "account_id": "acct-prod-1",
+      "service": "Compute Engine",
+      "region": "europe-west1",
+      "anomaly_type": "budget_breach",
+      "timestamp": "2026-03-05T05:00:00+00:00"
+    }
+  ]
+}

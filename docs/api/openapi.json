@@ -1,0 +1,1857 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FinGuard API",
+    "description": "Real-time cloud billing anomaly detection platform.\n\nFinGuard ingests billing events from GCP, AWS, and Azure, scores them with a weighted ensemble of time-series forecasting, Isolation Forest, and deterministic rules, and surfaces anomalies through a queryable REST API with lifecycle management.",
+    "contact": {
+      "name": "FinGuard Team",
+      "email": "yousif.alshammrei@gmail.com"
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Service health check",
+        "description": "OPS-01: Aggregate service health check.\n\nReturns 200 for ``ok`` and ``degraded`` (service is operational).\nReturns 503 for ``unhealthy`` so orchestrators can restart the pod.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Aggregate health status for all service components",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Authenticate and issue a JWT",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          },
+          "503": {
+            "description": "Database not configured"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events": {
+      "post": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Ingest a billing event",
+        "description": "Accept and validate a canonical billing event (ARC-04).\n\nDuplicate ``event_id`` values are handled idempotently: the original\nreceipt is returned with ``duplicate=true`` and HTTP 200 instead of 202.\n\nWhen a live DB session is available the event is persisted to\n``billing_events_raw`` (DB-01).  The in-memory store provides a fast\npre-check so most duplicates never reach the database.\n\nSEC-04: every accepted ingest is recorded in ``audit_logs``. Duplicate\nsubmissions are deliberately *not* re-audited — the original ingest\nalready produced a row.",
+        "operationId": "ingest_event_api_v1_events_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BillingEvent"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestionReceipt"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Event already accepted (duplicate event_id)"
+          },
+          "401": {
+            "description": "Missing or invalid bearer token"
+          },
+          "403": {
+            "description": "Authenticated user lacks the admin role"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/anomalies": {
+      "get": {
+        "tags": [
+          "anomalies"
+        ],
+        "summary": "List anomalies",
+        "description": "API-01: Paginated anomaly list.\n\nWhen DATABASE_URL is not configured the endpoint returns an empty list\nrather than raising — consistent with the rest of the detection API.",
+        "operationId": "list_anomalies_api_v1_anomalies_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by account ID",
+              "title": "Account Id"
+            },
+            "description": "Filter by account ID"
+          },
+          {
+            "name": "service",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by service name",
+              "title": "Service"
+            },
+            "description": "Filter by service name"
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by region",
+              "title": "Region"
+            },
+            "description": "Filter by region"
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "none",
+                    "low",
+                    "medium",
+                    "high"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by severity level",
+              "title": "Severity"
+            },
+            "description": "Filter by severity level"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "open",
+                    "acknowledged",
+                    "resolved",
+                    "suppressed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by lifecycle status",
+              "title": "Status"
+            },
+            "description": "Filter by lifecycle status"
+          },
+          {
+            "name": "from_bucket",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Include buckets at or after this datetime (ISO-8601)",
+              "title": "From Bucket"
+            },
+            "description": "Include buckets at or after this datetime (ISO-8601)"
+          },
+          {
+            "name": "to_bucket",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Include buckets at or before this datetime (ISO-8601)",
+              "title": "To Bucket"
+            },
+            "description": "Include buckets at or before this datetime (ISO-8601)"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "detected_at",
+                "bucket",
+                "anomaly_score",
+                "severity"
+              ],
+              "type": "string",
+              "description": "Column to sort by",
+              "default": "detected_at",
+              "title": "Sort"
+            },
+            "description": "Column to sort by"
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "description": "Sort direction",
+              "default": "desc",
+              "title": "Order"
+            },
+            "description": "Sort direction"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number (1-indexed)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number (1-indexed)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Results per page (max 200)",
+              "default": 50,
+              "title": "Page Size"
+            },
+            "description": "Results per page (max 200)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnomalyListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token"
+          },
+          "403": {
+            "description": "Authenticated user lacks an analyst/admin role"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anomalies/{anomaly_id}": {
+      "get": {
+        "tags": [
+          "anomalies"
+        ],
+        "summary": "Get anomaly detail",
+        "description": "API-02: Return a single anomaly record by ID.",
+        "operationId": "get_anomaly_api_v1_anomalies__anomaly_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "anomaly_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Anomaly Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnomalyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token"
+          },
+          "403": {
+            "description": "Authenticated user lacks an analyst/admin role"
+          },
+          "404": {
+            "description": "Anomaly not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anomalies/{anomaly_id}/status": {
+      "patch": {
+        "tags": [
+          "anomalies"
+        ],
+        "summary": "Update anomaly status",
+        "description": "API-03: Transition an anomaly to a new lifecycle status.",
+        "operationId": "update_anomaly_status_api_v1_anomalies__anomaly_id__status_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "anomaly_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Anomaly Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnomalyStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnomalyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token"
+          },
+          "403": {
+            "description": "Authenticated user lacks an analyst/admin role"
+          },
+          "404": {
+            "description": "Anomaly not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "List alerts",
+        "description": "API-04: Paginated alert list.",
+        "operationId": "list_alerts_api_v1_alerts_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by account ID",
+              "title": "Account Id"
+            },
+            "description": "Filter by account ID"
+          },
+          {
+            "name": "service",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by service name",
+              "title": "Service"
+            },
+            "description": "Filter by service name"
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by region",
+              "title": "Region"
+            },
+            "description": "Filter by region"
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "none",
+                    "low",
+                    "medium",
+                    "high"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by severity level",
+              "title": "Severity"
+            },
+            "description": "Filter by severity level"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pending",
+                    "sent",
+                    "failed",
+                    "suppressed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by delivery status",
+              "title": "Status"
+            },
+            "description": "Filter by delivery status"
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "in_app",
+                    "email"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by delivery channel",
+              "title": "Channel"
+            },
+            "description": "Filter by delivery channel"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number (1-indexed)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number (1-indexed)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Results per page (max 200)",
+              "default": 50,
+              "title": "Page Size"
+            },
+            "description": "Results per page (max 200)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token"
+          },
+          "403": {
+            "description": "Authenticated user lacks an analyst/admin role"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/kpi/summary": {
+      "get": {
+        "tags": [
+          "kpi"
+        ],
+        "summary": "KPI summary",
+        "description": "API-05: Aggregated anomaly statistics for dashboard KPI cards.",
+        "operationId": "kpi_summary_api_v1_kpi_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KpiSummaryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token"
+          },
+          "403": {
+            "description": "Authenticated user lacks an analyst/admin role"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/kpi/trend": {
+      "get": {
+        "tags": [
+          "kpi"
+        ],
+        "summary": "KPI daily trend",
+        "description": "UI-06: Daily anomaly counts for the dashboard sparkline.",
+        "operationId": "kpi_trend_api_v1_kpi_trend_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "description": "Number of trailing days to include",
+              "default": 14,
+              "title": "Days"
+            },
+            "description": "Number of trailing days to include"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KpiTrendResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token"
+          },
+          "403": {
+            "description": "Authenticated user lacks an analyst/admin role"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/detection/health": {
+      "get": {
+        "tags": [
+          "detection"
+        ],
+        "summary": "Detection service health check",
+        "description": "DET-03 health endpoint.\n\nReturns component statuses for DB, scorer, and emitter.\n``status`` at the top level is ``\"ok\"`` when the DB is reachable,\n``\"degraded\"`` otherwise.\n\nResponse shape::\n\n    {\n      \"status\": \"ok\" | \"degraded\",\n      \"components\": {\n        \"db\":      { \"status\": \"ok\", \"anomaly_count\": 42 },\n        \"scorer\":  { \"status\": \"ok\", \"baseline_loaded\": true, ... },\n        \"emitter\": { \"status\": \"configured\", \"stream_name\": \"anomaly-events\" }\n      },\n      \"metrics\": { ... }   // same payload as GET /metrics\n    }",
+        "operationId": "detection_health_api_v1_detection_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Detection Health Api V1 Detection Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/detection/metrics": {
+      "get": {
+        "tags": [
+          "detection"
+        ],
+        "summary": "Detection service metrics snapshot",
+        "description": "DET-03 metrics endpoint.\n\nReturns a JSON snapshot of the in-process counter/gauge values written\nby the detection pipeline after each scored batch.\n\nResponse shape::\n\n    {\n      \"batches_processed\": 150,\n      \"rows_scored\": 7500,\n      \"anomalies_detected\": 12,\n      \"anomalies_persisted\": 12,\n      \"events_emitted\": 12,\n      \"errors_scoring\": 0,\n      \"errors_persist\": 0,\n      \"errors_emit\": 0,\n      \"last_batch_at\": \"2026-04-16T12:00:00+00:00\",\n      \"last_batch_rows\": 50,\n      \"last_batch_anomalies\": 1\n    }",
+        "operationId": "detection_metrics_endpoint_api_v1_detection_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Detection Metrics Endpoint Api V1 Detection Metrics Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/audit/logs": {
+      "get": {
+        "tags": [
+          "audit"
+        ],
+        "summary": "List audit log entries",
+        "description": "SEC-04: paginated audit log query (admin only).",
+        "operationId": "list_audit_logs_api_v1_audit_logs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by event type",
+              "title": "Event Type"
+            },
+            "description": "Filter by event type"
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by action",
+              "title": "Action"
+            },
+            "description": "Filter by action"
+          },
+          {
+            "name": "outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "success",
+                    "failure"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by outcome",
+              "title": "Outcome"
+            },
+            "description": "Filter by outcome"
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by actor user_id",
+              "title": "User Id"
+            },
+            "description": "Filter by actor user_id"
+          },
+          {
+            "name": "from_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Include rows with created_at >= this datetime (ISO-8601)",
+              "title": "From Time"
+            },
+            "description": "Include rows with created_at >= this datetime (ISO-8601)"
+          },
+          {
+            "name": "to_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Include rows with created_at <= this datetime (ISO-8601)",
+              "title": "To Time"
+            },
+            "description": "Include rows with created_at <= this datetime (ISO-8601)"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number (1-indexed)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number (1-indexed)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Results per page (max 200)",
+              "default": 50,
+              "title": "Page Size"
+            },
+            "description": "Results per page (max 200)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditLogListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token"
+          },
+          "403": {
+            "description": "Authenticated user lacks the admin role"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccountCount": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "title": "Account Id"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "count"
+        ],
+        "title": "AccountCount"
+      },
+      "AlertListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AlertResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "pages": {
+            "type": "integer",
+            "title": "Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size",
+          "pages"
+        ],
+        "title": "AlertListResponse"
+      },
+      "AlertResponse": {
+        "properties": {
+          "alert_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Alert Id"
+          },
+          "anomaly_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Anomaly Id"
+          },
+          "account_id": {
+            "type": "string",
+            "title": "Account Id"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "region": {
+            "type": "string",
+            "title": "Region"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "channel": {
+            "type": "string",
+            "title": "Channel"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "dedup_key": {
+            "type": "string",
+            "title": "Dedup Key"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "error_detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alert_id",
+          "anomaly_id",
+          "account_id",
+          "service",
+          "region",
+          "severity",
+          "channel",
+          "status",
+          "dedup_key",
+          "created_at"
+        ],
+        "title": "AlertResponse"
+      },
+      "AnomalyListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AnomalyResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "pages": {
+            "type": "integer",
+            "title": "Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size",
+          "pages"
+        ],
+        "title": "AnomalyListResponse",
+        "description": "Paginated list of anomaly records."
+      },
+      "AnomalyResponse": {
+        "properties": {
+          "anomaly_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Anomaly Id"
+          },
+          "account_id": {
+            "type": "string",
+            "title": "Account Id"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "region": {
+            "type": "string",
+            "title": "Region"
+          },
+          "bucket": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Bucket"
+          },
+          "anomaly_score": {
+            "type": "number",
+            "title": "Anomaly Score"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "detected_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Detected At"
+          },
+          "score_breakdown": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score Breakdown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "anomaly_id",
+          "account_id",
+          "service",
+          "region",
+          "bucket",
+          "anomaly_score",
+          "severity",
+          "status",
+          "detected_at"
+        ],
+        "title": "AnomalyResponse",
+        "description": "Single anomaly record returned by the list endpoint."
+      },
+      "AnomalyStatusUpdate": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "acknowledged",
+              "resolved",
+              "suppressed"
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "AnomalyStatusUpdate",
+        "description": "Request body for API-03: update an anomaly's lifecycle status."
+      },
+      "AuditLogListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AuditLogResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "pages": {
+            "type": "integer",
+            "title": "Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size",
+          "pages"
+        ],
+        "title": "AuditLogListResponse",
+        "description": "Paginated list of audit log entries."
+      },
+      "AuditLogResponse": {
+        "properties": {
+          "audit_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Audit Id"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "actor_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Email"
+          },
+          "actor_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Role"
+          },
+          "target_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Type"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id"
+          },
+          "ip_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip Address"
+          },
+          "user_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Agent"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "audit_id",
+          "event_type",
+          "action",
+          "outcome",
+          "created_at"
+        ],
+        "title": "AuditLogResponse",
+        "description": "One audit log row, as returned by GET /api/v1/audit/logs."
+      },
+      "BillingEvent": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Event Id"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "gcp",
+              "aws",
+              "azure"
+            ],
+            "title": "Provider"
+          },
+          "account_id": {
+            "type": "string",
+            "title": "Account Id"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "region": {
+            "type": "string",
+            "title": "Region"
+          },
+          "cost_amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Cost Amount"
+          },
+          "usage_amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Usage Amount"
+          },
+          "usage_unit": {
+            "type": "string",
+            "title": "Usage Unit"
+          },
+          "tags": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Tags"
+          },
+          "source_type": {
+            "type": "string",
+            "enum": [
+              "synthetic",
+              "live"
+            ],
+            "title": "Source Type",
+            "default": "synthetic"
+          }
+        },
+        "type": "object",
+        "required": [
+          "timestamp",
+          "provider",
+          "account_id",
+          "service",
+          "region",
+          "cost_amount",
+          "usage_amount",
+          "usage_unit"
+        ],
+        "title": "BillingEvent",
+        "description": "Canonical billing event schema (ARC-04).\n\n``event_id`` is auto-generated when omitted. To support idempotent\nre-submission the caller should generate the ID client-side and include it\nin every attempt; omitting it makes each request appear unique."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "IngestionReceipt": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Event Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "accepted"
+            ],
+            "const": "accepted",
+            "title": "Status",
+            "default": "accepted"
+          },
+          "duplicate": {
+            "type": "boolean",
+            "title": "Duplicate",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_id"
+        ],
+        "title": "IngestionReceipt",
+        "description": "Response returned after a successful event ingestion."
+      },
+      "KpiSummaryResponse": {
+        "properties": {
+          "total_anomalies": {
+            "type": "integer",
+            "title": "Total Anomalies"
+          },
+          "open_count": {
+            "type": "integer",
+            "title": "Open Count"
+          },
+          "acknowledged_count": {
+            "type": "integer",
+            "title": "Acknowledged Count"
+          },
+          "resolved_count": {
+            "type": "integer",
+            "title": "Resolved Count"
+          },
+          "suppressed_count": {
+            "type": "integer",
+            "title": "Suppressed Count"
+          },
+          "high_severity_count": {
+            "type": "integer",
+            "title": "High Severity Count"
+          },
+          "medium_severity_count": {
+            "type": "integer",
+            "title": "Medium Severity Count"
+          },
+          "low_severity_count": {
+            "type": "integer",
+            "title": "Low Severity Count"
+          },
+          "anomalies_last_24h": {
+            "type": "integer",
+            "title": "Anomalies Last 24H"
+          },
+          "top_services": {
+            "items": {
+              "$ref": "#/components/schemas/ServiceCount"
+            },
+            "type": "array",
+            "title": "Top Services"
+          },
+          "top_accounts": {
+            "items": {
+              "$ref": "#/components/schemas/AccountCount"
+            },
+            "type": "array",
+            "title": "Top Accounts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_anomalies",
+          "open_count",
+          "acknowledged_count",
+          "resolved_count",
+          "suppressed_count",
+          "high_severity_count",
+          "medium_severity_count",
+          "low_severity_count",
+          "anomalies_last_24h",
+          "top_services",
+          "top_accounts"
+        ],
+        "title": "KpiSummaryResponse",
+        "description": "Aggregated anomaly statistics for the dashboard KPI cards."
+      },
+      "KpiTrendResponse": {
+        "properties": {
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "days",
+          "points"
+        ],
+        "title": "KpiTrendResponse",
+        "description": "UI-06: Daily anomaly counts for the trend sparkline."
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "Registered user email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Password",
+            "description": "Plaintext password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "ServiceCount": {
+        "properties": {
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "service",
+          "count"
+        ],
+        "title": "ServiceCount"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "Signed JWT bearer token"
+          },
+          "token_type": {
+            "type": "string",
+            "enum": [
+              "bearer"
+            ],
+            "const": "bearer",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Token lifetime in seconds"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "analyst"
+            ],
+            "title": "Role",
+            "description": "Role granted to the authenticated user"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "expires_in",
+          "role"
+        ],
+        "title": "TokenResponse"
+      },
+      "TrendPoint": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "count"
+        ],
+        "title": "TrendPoint",
+        "description": "One day in the daily anomaly-count trend."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "ingestion",
+      "description": "Ingest raw billing events from cloud providers (ING-01/02/03)."
+    },
+    {
+      "name": "anomalies",
+      "description": "Query, inspect, and triage detected billing anomalies. Supports pagination, filtering, detail retrieval, and status transitions (open → acknowledged → resolved / suppressed)."
+    },
+    {
+      "name": "alerts",
+      "description": "Query alert delivery records produced by the alert orchestration service (ALT-01)."
+    },
+    {
+      "name": "kpi",
+      "description": "Aggregated KPI statistics for the dashboard (API-05)."
+    },
+    {
+      "name": "health",
+      "description": "Aggregate service health check (OPS-01). Used by load balancers and container orchestrators."
+    },
+    {
+      "name": "detection",
+      "description": "Health and metrics endpoints for the real-time detection pipeline (DET-03)."
+    },
+    {
+      "name": "auth",
+      "description": "JWT authentication: login and bearer-token issuance (SEC-01)."
+    },
+    {
+      "name": "audit",
+      "description": "Admin-only audit log retrieval for auth and privileged actions (SEC-04)."
+    }
+  ]
+}

@@ -15,7 +15,8 @@ export function formatDateTime(value: string | Date | null | undefined): string 
 
 export function formatScore(value: number | null | undefined, fractionDigits = 2): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "-";
-  return value.toFixed(fractionDigits);
+  const digits = Math.max(0, Math.min(100, Math.trunc(fractionDigits)));
+  return value.toFixed(digits);
 }
 
 export function shortId(value: string, head = 8): string {

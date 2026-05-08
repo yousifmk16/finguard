@@ -23,29 +23,31 @@ export default function Pagination({
   return (
     <nav className="pagination" aria-label="Pagination">
       <span className="pagination__summary">
-        {hasResults
-          ? `Showing ${start}-${end} of ${total}`
-          : "No results"}
+        {hasResults ? `Showing ${start}–${end} of ${total}` : "No results"}
       </span>
-      <div className="pagination__controls">
-        <button
-          type="button"
-          onClick={() => onPageChange(page - 1)}
-          disabled={disabled || page <= 1}
-        >
-          Previous
-        </button>
-        <span className="pagination__page">
-          Page {page} of {lastPage}
-        </span>
-        <button
-          type="button"
-          onClick={() => onPageChange(page + 1)}
-          disabled={disabled || page >= lastPage}
-        >
-          Next
-        </button>
-      </div>
+      {hasResults ? (
+        <div className="pagination__controls">
+          <button
+            type="button"
+            onClick={() => onPageChange(page - 1)}
+            disabled={disabled || page <= 1}
+            aria-label="Go to previous page"
+          >
+            Previous
+          </button>
+          <span className="pagination__page" aria-live="polite">
+            Page {page} of {lastPage}
+          </span>
+          <button
+            type="button"
+            onClick={() => onPageChange(page + 1)}
+            disabled={disabled || page >= lastPage}
+            aria-label="Go to next page"
+          >
+            Next
+          </button>
+        </div>
+      ) : null}
     </nav>
   );
 }

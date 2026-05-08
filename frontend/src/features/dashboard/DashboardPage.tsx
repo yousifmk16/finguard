@@ -19,10 +19,10 @@ export default function DashboardPage() {
   const summaryEmpty = summary.data === null;
 
   return (
-    <section className="dashboard-page">
+    <section className="dashboard-page" aria-labelledby="dashboard-heading">
       <header className="dashboard-page__header">
         <div>
-          <h1>Dashboard</h1>
+          <h1 id="dashboard-heading">Dashboard</h1>
           <p className="dashboard-page__subtitle">
             Real-time anomaly health across cloud accounts.
           </p>

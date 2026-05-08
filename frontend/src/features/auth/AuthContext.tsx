@@ -71,10 +71,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSessionState] = useState<AuthSession | null>(() => readStoredSession());
 
   useEffect(() => {
-    if (session) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-    } else {
-      window.localStorage.removeItem(STORAGE_KEY);
+    try {
+      if (session) {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      } else {
+        window.localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {
+      // localStorage unavailable (private browsing, storage quota exceeded, etc.)
     }
   }, [session]);
 

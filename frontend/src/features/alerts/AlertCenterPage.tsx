@@ -138,10 +138,10 @@ export default function AlertCenterPage() {
   const hasActiveFilters = Object.values(filters).some((v) => v !== "");
 
   return (
-    <section className="anomalies-page">
+    <section className="anomalies-page" aria-labelledby="alerts-heading">
       <header className="anomalies-page__header">
         <div>
-          <h1>Alert Center</h1>
+          <h1 id="alerts-heading">Alert Center</h1>
           <p className="anomalies-page__subtitle">
             Severity-grouped alert queue with delivery status across channels.
             <LiveIndicator lastUpdatedAt={lastUpdatedAt} />
@@ -180,13 +180,13 @@ export default function AlertCenterPage() {
               <th scope="col">Alert ID</th>
               <th scope="col">Anomaly</th>
               <th scope="col">Account</th>
-              <th scope="col">Service</th>
-              <th scope="col">Region</th>
+              <th scope="col" className="data-table__col--hide-sm">Service</th>
+              <th scope="col" className="data-table__col--hide-md">Region</th>
               <th scope="col">Severity</th>
-              <th scope="col">Channel</th>
+              <th scope="col" className="data-table__col--hide-sm">Channel</th>
               <th scope="col">Status</th>
-              <th scope="col">Created</th>
-              <th scope="col">Sent</th>
+              <th scope="col" className="data-table__col--hide-md">Created</th>
+              <th scope="col" className="data-table__col--hide-md">Sent</th>
             </tr>
           </thead>
           <tbody>
@@ -258,12 +258,12 @@ function AlertRow({ row }: { row: AlertRecord }) {
         </Link>
       </td>
       <td>{row.account_id}</td>
-      <td>{row.service}</td>
-      <td>{row.region}</td>
+      <td className="data-table__col--hide-sm">{row.service}</td>
+      <td className="data-table__col--hide-md">{row.region}</td>
       <td>
         <SeverityBadge severity={row.severity} />
       </td>
-      <td>
+      <td className="data-table__col--hide-sm">
         <span className="badge badge--channel">{row.channel.replace("_", "-")}</span>
       </td>
       <td>
@@ -278,8 +278,8 @@ function AlertRow({ row }: { row: AlertRecord }) {
           </span>
         ) : null}
       </td>
-      <td>{formatDateTime(row.created_at)}</td>
-      <td>{formatDateTime(row.sent_at)}</td>
+      <td className="data-table__col--hide-md">{formatDateTime(row.created_at)}</td>
+      <td className="data-table__col--hide-md">{formatDateTime(row.sent_at)}</td>
     </tr>
   );
 }

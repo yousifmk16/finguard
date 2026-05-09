@@ -29,14 +29,28 @@ function joinUrl(base: string, path: string): string {
 }
 
 function extractDetail(payload: unknown, fallback: string): string {
-  if (payload && typeof payload === "object" && "detail" in payload) {
-    const detail = (payload as { detail?: unknown }).detail;
-    if (typeof detail === "string") return detail;
-    if (Array.isArray(detail) && detail.length > 0) {
-      const first = detail[0];
-      if (first && typeof first === "object" && "msg" in first) {
-        const msg = (first as { msg?: unknown }).msg;
-        if (typeof msg === "string") return msg;
+  if (payload && typeof payload === "object") {
+    // Standard FastAPI format: { detail: string | [{msg: string}] }
+    if ("detail" in payload) {
+      const detail = (payload as { detail?: unknown }).detail;
+      if (typeof detail === "string") return detail;
+      if (Array.isArray(detail) && detail.length > 0) {
+        const first = detail[0];
+        if (first && typeof first === "object" && "msg" in first) {
+          const msg = (first as { msg?: unknown }).msg;
+          if (typeof msg === "string") return msg;
+        }
+      }
+    }
+    // Custom FinGuard validation format: { errors: [{field, message}] }
+    if ("errors" in payload) {
+      const errors = (payload as { errors?: unknown }).errors;
+      if (Array.isArray(errors) && errors.length > 0) {
+        const first = errors[0];
+        if (first && typeof first === "object" && "message" in first) {
+          const msg = (first as { message?: unknown }).message;
+          if (typeof msg === "string") return msg;
+        }
       }
     }
   }

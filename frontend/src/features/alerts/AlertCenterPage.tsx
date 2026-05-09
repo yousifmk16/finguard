@@ -149,7 +149,7 @@ export default function AlertCenterPage() {
         </div>
         <button
           type="button"
-          className="anomalies-page__refresh"
+          className="btn btn--primary btn--sm btn--pill"
           onClick={reload}
           disabled={loading}
         >

@@ -1,10 +1,16 @@
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.alerts import router as alerts_router
+from app.api.users import router as users_router
 from app.api.anomalies import router as anomalies_router
 from app.api.audit import router as audit_router
 from app.api.auth import router as auth_router
@@ -114,3 +120,4 @@ app.include_router(alerts_router)
 app.include_router(kpi_router)
 app.include_router(detection_router)
 app.include_router(audit_router)
+app.include_router(users_router)

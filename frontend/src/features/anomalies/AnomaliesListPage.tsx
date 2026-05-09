@@ -195,7 +195,7 @@ export default function AnomaliesListPage() {
         </div>
         <button
           type="button"
-          className="anomalies-page__refresh"
+          className="btn btn--primary btn--sm btn--pill"
           onClick={reload}
           disabled={loading}
         >

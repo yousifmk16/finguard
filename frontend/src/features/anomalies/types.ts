@@ -12,6 +12,10 @@ export interface AnomalyRecord {
   status: AnomalyStatus | string;
   detected_at: string;
   score_breakdown?: Record<string, unknown> | null;
+  baseline_cost?: number;
+  observed_cost?: number;
+  delta_cost?: number;
+  delta_pct?: number;
 }
 
 export interface AnomalyListResponse {

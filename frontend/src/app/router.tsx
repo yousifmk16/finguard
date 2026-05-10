@@ -10,6 +10,7 @@ import AlertCenterPage from "@/features/alerts/AlertCenterPage";
 import PoliciesPage from "@/features/policies/PoliciesPage";
 import UsersPage from "@/features/users/UsersPage";
 import SettingsPage from "@/features/settings/SettingsPage";
+import DataGenPage from "@/features/datagen/DataGenPage";
 import ForbiddenPage from "@/features/errors/ForbiddenPage";
 import NotFoundPage from "@/features/errors/NotFoundPage";
 
@@ -32,20 +33,20 @@ export default function AppRouter() {
         <Route path="/anomalies/:anomalyId" element={<AnomalyDetailPage />} />
         <Route path="/alerts" element={<AlertCenterPage />} />
         <Route path="/settings" element={<SettingsPage />} />
-
-        <Route
-          path="/policies"
-          element={
-            <AdminRoute>
-              <PoliciesPage />
-            </AdminRoute>
-          }
-        />
+        <Route path="/policies" element={<PoliciesPage />} />
         <Route
           path="/users"
           element={
             <AdminRoute>
               <UsersPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/datagen"
+          element={
+            <AdminRoute>
+              <DataGenPage />
             </AdminRoute>
           }
         />

@@ -32,6 +32,7 @@ from app.core.security import (
     access_token_ttl_seconds,
     create_access_token,
     decode_access_token,
+    hash_password,
     verify_password,
 )
 from app.db.repos.user_repo import UserRepository
@@ -111,6 +112,53 @@ def login(
         user_agent=ua,
     )
     db.commit()
+    return TokenResponse(
+        access_token=token,
+        expires_in=access_token_ttl_seconds(),
+        role=user.role,
+    )
+
+
+class RegisterRequest(LoginRequest):
+    pass  # same fields: email + password
+
+
+@router.post(
+    "/register",
+    response_model=TokenResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Register a new account and issue a JWT",
+    responses={
+        409: {"description": "Email already registered"},
+        422: {"description": "Validation error"},
+        503: {"description": "Database not configured"},
+    },
+)
+def register(
+    body: RegisterRequest,
+    db: Session | None = Depends(get_db),
+) -> TokenResponse:
+    if db is None:
+        raise _DB_UNAVAILABLE
+    if len(body.password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="password must be at least 8 characters",
+        )
+    if _repo.get_by_email(db, body.email):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="email already registered",
+        )
+    user = _repo.create(
+        db,
+        email=body.email,
+        hashed_password=hash_password(body.password),
+        role="admin",
+    )
+    db.commit()
+    db.refresh(user)
+    token = create_access_token(user_id=user.user_id, role=user.role)
     return TokenResponse(
         access_token=token,
         expires_in=access_token_ttl_seconds(),

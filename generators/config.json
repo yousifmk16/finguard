@@ -1,8 +1,8 @@
 {
   "seed": 42,
   "n": 240,
-  "start_time": "2026-01-01T00:00:00Z",
-  "frequency": "1H",
+  "start_time": "2026-04-09T00:00:00Z",
+  "frequency": "3h",
   "provider": "gcp",
   "source_type": "synthetic",
   "accounts": ["acct-prod-1", "acct-prod-2", "acct-dev-1"],
@@ -52,25 +52,25 @@
   "anomaly_injectors": {
     "spike": {
       "enabled": true,
-      "count": 6,
-      "multiplier": 2.8
+      "count": 70,
+      "multiplier": 2.5
     },
     "drift": {
-      "enabled": true,
-      "start_index": 120,
-      "slope": 0.003
+      "enabled": false,
+      "start_index": 160,
+      "slope": 0.002
     },
     "level_shift": {
-      "enabled": true,
-      "start_index": 180,
-      "shift": 40.0
+      "enabled": false,
+      "start_index": 208,
+      "shift": 45.0
     },
     "budget_breach": {
-      "enabled": true,
-      "start_index": 200,
-      "duration": 10,
+      "enabled": false,
+      "start_index": 228,
+      "duration": 12,
       "budget_threshold": 220.0,
-      "breach_multiplier": 1.1
+      "breach_multiplier": 1.15
     }
   }
 }

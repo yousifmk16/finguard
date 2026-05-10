@@ -1,277 +1,135 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import Pagination from "@/components/common/Pagination";
+import Icon from "@/components/common/Icon";
 import SeverityBadge from "@/components/common/SeverityBadge";
 import StatusBadge from "@/components/common/StatusBadge";
-import { formatDateTime, formatScore, shortId } from "@/lib/formatters";
-import AnomalyFilterBar, {
-  type AnomalyFilters,
-} from "./AnomalyFilterBar";
+import Pagination from "@/components/common/Pagination";
+import { formatRelTime, formatScore } from "@/lib/formatters";
 import { useAnomaliesList } from "./useAnomaliesList";
-import type {
-  AnomalyListQuery,
-  AnomalyRecord,
-  AnomalySeverity,
-  AnomalySortField,
-  AnomalySortOrder,
-  AnomalyStatus,
-} from "./types";
+import type { AnomalyListQuery, AnomalySeverity, AnomalyStatus } from "./types";
 
-const DEFAULT_PAGE_SIZE = 25;
-const MAX_PAGE_SIZE = 200;
-const DEFAULT_SORT: AnomalySortField = "detected_at";
-const DEFAULT_ORDER: AnomalySortOrder = "desc";
-
-const SORT_FIELDS: AnomalySortField[] = [
-  "detected_at",
-  "bucket",
-  "anomaly_score",
-  "severity",
-];
-
-const SEVERITY_VALUES: AnomalySeverity[] = ["none", "low", "medium", "high"];
-const STATUS_VALUES: AnomalyStatus[] = [
-  "open",
-  "acknowledged",
-  "resolved",
-  "suppressed",
-];
-
-function clampInt(
-  value: string | null,
-  fallback: number,
-  min = 1,
-  max = Number.MAX_SAFE_INTEGER,
-): number {
-  if (value === null) return fallback;
-  const parsed = Number.parseInt(value, 10);
-  if (Number.isNaN(parsed)) return fallback;
-  return Math.min(Math.max(parsed, min), max);
-}
-
-function readSort(value: string | null): AnomalySortField {
-  return SORT_FIELDS.includes(value as AnomalySortField)
-    ? (value as AnomalySortField)
-    : DEFAULT_SORT;
-}
-
-function readOrder(value: string | null): AnomalySortOrder {
-  return value === "asc" ? "asc" : DEFAULT_ORDER;
-}
-
-function readFilters(params: URLSearchParams): AnomalyFilters {
-  return {
-    accountId: params.get("account_id") ?? "",
-    service: params.get("service") ?? "",
-    region: params.get("region") ?? "",
-    severity: params.get("severity") ?? "",
-    status: params.get("status") ?? "",
-    fromBucket: params.get("from_bucket") ?? "",
-    toBucket: params.get("to_bucket") ?? "",
-  };
-}
-
-// Severity / status come from the URL as raw strings; only forward them to the
-// API when they match the typed enums so a tampered URL never produces a 422.
-function narrowSeverity(value: string): AnomalySeverity | undefined {
-  return SEVERITY_VALUES.includes(value as AnomalySeverity)
-    ? (value as AnomalySeverity)
-    : undefined;
-}
-
-function narrowStatus(value: string): AnomalyStatus | undefined {
-  return STATUS_VALUES.includes(value as AnomalyStatus)
-    ? (value as AnomalyStatus)
-    : undefined;
-}
+const PAGE_SIZE = 20;
 
 export default function AnomaliesListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const page = clampInt(searchParams.get("page"), 1, 1);
-  const pageSize = clampInt(
-    searchParams.get("page_size"),
-    DEFAULT_PAGE_SIZE,
-    1,
-    MAX_PAGE_SIZE,
-  );
-  const sort = readSort(searchParams.get("sort"));
-  const order = readOrder(searchParams.get("order"));
-  const filters = useMemo(() => readFilters(searchParams), [searchParams]);
+  const page = Math.max(1, Number(searchParams.get("page")) || 1);
+  const severity = searchParams.get("severity") as AnomalySeverity | null;
+  const status = searchParams.get("status") as AnomalyStatus | null;
+  const service = searchParams.get("service") ?? "";
 
-  const query = useMemo<AnomalyListQuery>(
-    () => ({
-      page,
-      pageSize,
-      sort,
-      order,
-      accountId: filters.accountId || undefined,
-      service: filters.service || undefined,
-      region: filters.region || undefined,
-      severity: narrowSeverity(filters.severity),
-      status: narrowStatus(filters.status),
-      fromBucket: filters.fromBucket || undefined,
-      toBucket: filters.toBucket || undefined,
-    }),
-    [page, pageSize, sort, order, filters],
-  );
+  const query = useMemo<AnomalyListQuery>(() => ({
+    page,
+    pageSize: PAGE_SIZE,
+    severity: severity ?? undefined,
+    status: status ?? undefined,
+    service: service || undefined,
+    sort: "detected_at",
+    order: "desc",
+  }), [page, severity, status, service]);
+
   const { data, loading, error, reload } = useAnomaliesList(query);
-
-  // When filters or sort change, jump back to page 1; preserving page would
-  // often land users on an empty page they did not ask for.
-  const updateParams = useCallback(
-    (
-      mutate: (params: URLSearchParams) => void,
-      { resetPage }: { resetPage: boolean } = { resetPage: false },
-    ) => {
-      const next = new URLSearchParams(searchParams);
-      mutate(next);
-      if (resetPage) next.delete("page");
-      setSearchParams(next, { replace: false });
-    },
-    [searchParams, setSearchParams],
-  );
-
-  const handlePageChange = (nextPage: number) => {
-    updateParams((params) => {
-      params.set("page", String(nextPage));
-      params.set("page_size", String(pageSize));
-    });
-  };
-
-  const handleApplyFilters = (next: AnomalyFilters) => {
-    updateParams((params) => {
-      writeFilterParam(params, "account_id", next.accountId);
-      writeFilterParam(params, "service", next.service);
-      writeFilterParam(params, "region", next.region);
-      writeFilterParam(params, "severity", next.severity);
-      writeFilterParam(params, "status", next.status);
-      writeFilterParam(params, "from_bucket", next.fromBucket);
-      writeFilterParam(params, "to_bucket", next.toBucket);
-    }, { resetPage: true });
-  };
-
-  const handleResetFilters = () => {
-    updateParams((params) => {
-      for (const key of [
-        "account_id",
-        "service",
-        "region",
-        "severity",
-        "status",
-        "from_bucket",
-        "to_bucket",
-      ]) {
-        params.delete(key);
-      }
-    }, { resetPage: true });
-  };
-
-  const handleSort = (field: AnomalySortField) => {
-    updateParams((params) => {
-      const isSame = sort === field;
-      const nextOrder: AnomalySortOrder = isSame && order === "desc" ? "asc" : "desc";
-      params.set("sort", field);
-      params.set("order", nextOrder);
-    }, { resetPage: true });
-  };
-
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
   const pages = data?.pages ?? 0;
-  const showSkeleton = loading && data === null;
-  const hasActiveFilters =
-    Object.values(filters).some((value) => value !== "") ||
-    sort !== DEFAULT_SORT ||
-    order !== DEFAULT_ORDER;
+
+  const handlePageChange = (nextPage: number) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("page", String(nextPage));
+    setSearchParams(next);
+  };
+
+  const toggleFilter = (key: string, value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (next.get(key) === value) {
+      next.delete(key);
+    } else {
+      next.set(key, value);
+    }
+    next.delete("page");
+    setSearchParams(next);
+  };
 
   return (
-    <section className="anomalies-page" aria-labelledby="anomalies-heading">
-      <header className="anomalies-page__header">
+    <div className="page fade-in">
+      <div className="page-header">
         <div>
-          <h1 id="anomalies-heading">Anomalies</h1>
-          <p className="anomalies-page__subtitle">
-            Active and historical anomalies detected across cloud accounts.
-          </p>
+          <h1 className="page-title">Anomalies</h1>
+          <div className="page-sub">
+            <span className="mono">{total.toLocaleString()}</span> total
+          </div>
         </div>
-        <button
-          type="button"
-          className="btn btn--primary btn--sm btn--pill"
-          onClick={reload}
-          disabled={loading}
-        >
-          {loading ? "Refreshing..." : "Refresh"}
-        </button>
-      </header>
-
-      <AnomalyFilterBar
-        filters={filters}
-        onApply={handleApplyFilters}
-        onReset={handleResetFilters}
-        disabled={loading && data === null}
-      />
-
-      {error ? (
-        <div className="state-banner state-banner--error" role="alert">
-          <span>{error}</span>
-          <button type="button" onClick={reload}>
-            Try again
+        <div className="page-actions">
+          <button className="btn" type="button" onClick={reload} disabled={loading}>
+            {loading ? "Refreshing\u2026" : "Refresh"}
           </button>
         </div>
-      ) : null}
+      </div>
 
-      <div className="data-table__wrapper" aria-busy={loading}>
-        <table className="data-table">
+      <div className="filter-bar">
+        <input
+          className="input search"
+          placeholder="service, account, region\u2026"
+          value={service}
+          onChange={(e) => {
+            const next = new URLSearchParams(searchParams);
+            if (e.target.value) next.set("service", e.target.value);
+            else next.delete("service");
+            next.delete("page");
+            setSearchParams(next);
+          }}
+        />
+        <span style={{ width: 1, height: 18, background: "var(--border)", margin: "0 4px" }} />
+        <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--text-dim)", letterSpacing: "0.08em", textTransform: "uppercase", marginRight: 4 }}>SEV</span>
+        {(["high", "medium", "low"] as const).map((s) => (
+          <button key={s} type="button" className={`chip ${severity === s ? "active" : ""}`} onClick={() => toggleFilter("severity", s)}>
+            <span className="sev-dot" style={{ background: s === "high" ? "var(--sev-high)" : s === "medium" ? "var(--sev-med)" : "var(--sev-low)" }} />
+            {s}
+          </button>
+        ))}
+        <span style={{ width: 1, height: 18, background: "var(--border)", margin: "0 6px" }} />
+        <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--text-dim)", letterSpacing: "0.08em", textTransform: "uppercase", marginRight: 4 }}>STATUS</span>
+        {(["open", "acknowledged", "resolved", "suppressed"] as const).map((s) => (
+          <button key={s} type="button" className={`chip ${status === s ? "active" : ""}`} onClick={() => toggleFilter("status", s)}>{s}</button>
+        ))}
+      </div>
+
+      {error && (
+        <div style={{ padding: "10px 14px", background: "var(--sev-high-bg)", border: "1px solid var(--sev-high)", borderRadius: "var(--r-md)", marginBottom: 14, fontSize: 12.5, color: "var(--sev-high)" }}>
+          {error}
+        </div>
+      )}
+
+      <div className="table-wrap">
+        <table className="tbl">
           <thead>
             <tr>
-              <th scope="col">ID</th>
-              <th scope="col">Account</th>
-              <th scope="col" className="data-table__col--hide-sm">Service</th>
-              <th scope="col" className="data-table__col--hide-md">Region</th>
-              <SortHeader
-                label="Score"
-                field="anomaly_score"
-                currentSort={sort}
-                currentOrder={order}
-                onSort={handleSort}
-                className="data-table__col-num"
-              />
-              <SortHeader
-                label="Severity"
-                field="severity"
-                currentSort={sort}
-                currentOrder={order}
-                onSort={handleSort}
-              />
-              <th scope="col">Status</th>
-              <SortHeader
-                label="Detected"
-                field="detected_at"
-                currentSort={sort}
-                currentOrder={order}
-                onSort={handleSort}
-                className="data-table__col--hide-md"
-              />
-              <th scope="col" aria-label="Actions" />
+              <th style={{ width: 80 }}>SEV</th>
+              <th>SERVICE</th>
+              <th>ACCOUNT</th>
+              <th>REGION</th>
+              <th className="num">SCORE</th>
+              <th>STATUS</th>
+              <th>DETECTED</th>
+              <th style={{ width: 24 }} />
             </tr>
           </thead>
           <tbody>
-            {showSkeleton ? (
-              <tr>
-                <td colSpan={9} className="data-table__placeholder">
-                  Loading anomalies...
-                </td>
+            {loading && items.length === 0 ? (
+              <tr><td colSpan={8} style={{ textAlign: "center", padding: 40, color: "var(--text-mute)" }}>Loading anomalies...</td></tr>
+            ) : items.length === 0 ? (
+              <tr><td colSpan={8}><div className="empty"><div className="big">NO MATCHES</div><div style={{ marginTop: 8, fontSize: 12 }}>Try clearing filters.</div></div></td></tr>
+            ) : items.map((a, i) => (
+              <tr key={a.anomaly_id} className={i === 0 ? "new" : ""}>
+                <td><SeverityBadge severity={a.severity} /></td>
+                <td>{a.service}</td>
+                <td className="mono" style={{ color: "var(--text-2)" }}>{a.account_id}</td>
+                <td className="mono" style={{ color: "var(--text-mute)" }}>{a.region}</td>
+                <td className="num">{formatScore(a.anomaly_score)}</td>
+                <td><StatusBadge status={a.status} /></td>
+                <td className="mono" style={{ color: "var(--text-mute)" }}>{formatRelTime(a.detected_at)}</td>
+                <td><Link to={`/anomalies/${a.anomaly_id}`}><Icon name="chevron-right" size={14} /></Link></td>
               </tr>
-            ) : items.length === 0 && !error ? (
-              <tr>
-                <td colSpan={9} className="data-table__placeholder">
-                  {hasActiveFilters
-                    ? "No anomalies match the current filters."
-                    : "No anomalies match the current view."}
-                </td>
-              </tr>
-            ) : (
-              items.map((row) => <AnomalyRow key={row.anomaly_id} row={row} />)
-            )}
+            ))}
           </tbody>
         </table>
       </div>
@@ -280,98 +138,10 @@ export default function AnomaliesListPage() {
         page={page}
         pages={pages}
         total={total}
-        pageSize={pageSize}
+        pageSize={PAGE_SIZE}
         onPageChange={handlePageChange}
         disabled={loading}
       />
-    </section>
-  );
-}
-
-function writeFilterParam(
-  params: URLSearchParams,
-  key: string,
-  value: string,
-): void {
-  if (value) {
-    params.set(key, value);
-  } else {
-    params.delete(key);
-  }
-}
-
-interface SortHeaderProps {
-  label: string;
-  field: AnomalySortField;
-  currentSort: AnomalySortField;
-  currentOrder: AnomalySortOrder;
-  onSort: (field: AnomalySortField) => void;
-  className?: string;
-}
-
-function SortHeader({
-  label,
-  field,
-  currentSort,
-  currentOrder,
-  onSort,
-  className,
-}: SortHeaderProps) {
-  const active = currentSort === field;
-  const ariaSort = active
-    ? currentOrder === "asc"
-      ? "ascending"
-      : "descending"
-    : "none";
-  const indicator = active ? (currentOrder === "asc" ? "▲" : "▼") : "";
-
-  return (
-    <th scope="col" className={className} aria-sort={ariaSort}>
-      <button
-        type="button"
-        className={`data-table__sort${active ? " data-table__sort--active" : ""}`}
-        onClick={() => onSort(field)}
-      >
-        <span>{label}</span>
-        <span className="data-table__sort-indicator" aria-hidden="true">
-          {indicator}
-        </span>
-      </button>
-    </th>
-  );
-}
-
-function AnomalyRow({ row }: { row: AnomalyRecord }) {
-  return (
-    <tr>
-      <td>
-        <Link
-          to={`/anomalies/${row.anomaly_id}`}
-          title={row.anomaly_id}
-          aria-label={`Anomaly ${shortId(row.anomaly_id)}`}
-        >
-          {shortId(row.anomaly_id)}
-        </Link>
-      </td>
-      <td>{row.account_id}</td>
-      <td className="data-table__col--hide-sm">{row.service}</td>
-      <td className="data-table__col--hide-md">{row.region}</td>
-      <td className="data-table__col-num">{formatScore(row.anomaly_score)}</td>
-      <td>
-        <SeverityBadge severity={row.severity} />
-      </td>
-      <td>
-        <StatusBadge status={row.status} />
-      </td>
-      <td className="data-table__col--hide-md">{formatDateTime(row.detected_at)}</td>
-      <td className="data-table__col-action">
-        <Link
-          to={`/anomalies/${row.anomaly_id}`}
-          aria-label={`View detail for anomaly ${shortId(row.anomaly_id)}`}
-        >
-          View detail
-        </Link>
-      </td>
-    </tr>
+    </div>
   );
 }

@@ -19,7 +19,19 @@
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\azuzs\\\\OneDrive\\\\Desktop\\\\Project\\\\finguard\\\\frontend\\\\src\" -Recurse -Directory)",
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\azuzs\\\\OneDrive\\\\Desktop\\\\Project\\\\finguard\\\\frontend\\\\src\" -Recurse -Directory)",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "Bash(npx vite:*)",
+      "Bash(python -c ':*)",
+      "Bash(curl:*)",
+      "Bash(.venv/Scripts/python.exe -c ':*)",
+      "Bash(xargs grep:*)",
+      "Bash(taskkill /F /FI \"WINDOWTITLE eq FinGuard - Backend*\")",
+      "Bash(taskkill /F /IM uvicorn.exe)",
+      "Bash(start \"FinGuard - Backend\" cmd /k \"set PYTHONPATH=C:/Users/yousi/Documents/GitHub/finguard && .venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8000\")",
+      "Bash(pip install:*)",
+      "Bash(uvicorn app.main:app --reload --port 8000)",
+      "Bash(PYTHONPATH=\"C:/Users/yousi/Documents/GitHub/finguard\" C:/Users/yousi/Documents/GitHub/finguard/backend/.venv/Scripts/python.exe:*)",
+      "Bash(xargs cat:*)"
     ]
   }
 }

@@ -3,6 +3,11 @@ interface StatusBadgeProps {
 }
 
 export default function StatusBadge({ status }: StatusBadgeProps) {
-  const normalized = status.toLowerCase();
-  return <span className={`badge badge--status badge--status-${normalized}`}>{status}</span>;
+  const s = status.toLowerCase();
+  return (
+    <span className={`status ${s}`}>
+      <span className="stat-dot" />
+      {s.toUpperCase()}
+    </span>
+  );
 }

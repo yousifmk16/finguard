@@ -3,6 +3,11 @@ interface SeverityBadgeProps {
 }
 
 export default function SeverityBadge({ severity }: SeverityBadgeProps) {
-  const normalized = severity.toLowerCase();
-  return <span className={`badge badge--severity badge--severity-${normalized}`}>{severity}</span>;
+  const s = severity.toLowerCase();
+  return (
+    <span className={`sev ${s}`}>
+      <span className="sev-dot" />
+      {s.toUpperCase()}
+    </span>
+  );
 }

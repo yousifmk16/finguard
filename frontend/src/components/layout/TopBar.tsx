@@ -1,107 +1,89 @@
-import { useLocation, useNavigate, Link } from "react-router-dom";
-import { useAlertCount } from "@/features/alerts/useAlertCount";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Icon from "@/components/common/Icon";
+import { useAuth } from "@/features/auth/useAuth";
+import { useRole } from "@/features/auth/useRole";
 
-export default function TopBar() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { pending } = useAlertCount();
-
-  const crumbs = buildCrumbs(location.pathname);
-
-  return (
-    <header className="app-topbar">
-      {/* Breadcrumbs */}
-      <nav className="app-topbar__crumbs" aria-label="Breadcrumb">
-        {crumbs.map((c, i) => (
-          <span key={i} style={{ display: "contents" }}>
-            {i > 0 ? <span className="sep">/</span> : null}
-            {i === crumbs.length - 1 ? (
-              <strong>{c.label}</strong>
-            ) : c.to ? (
-              <Link to={c.to}>{c.label}</Link>
-            ) : (
-              <span>{c.label}</span>
-            )}
-          </span>
-        ))}
-      </nav>
-
-      {/* Actions */}
-      <div className="app-topbar__actions">
-        {/* Search */}
-        <label className="app-topbar__search" aria-label="Search">
-          <SearchIcon />
-          <input
-            type="search"
-            placeholder="Search anomalies, accounts, services…"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && e.currentTarget.value) {
-                navigate(`/anomalies?service=${encodeURIComponent(e.currentTarget.value)}`);
-                e.currentTarget.value = "";
-              }
-            }}
-          />
-          <kbd aria-hidden="true">⌘K</kbd>
-        </label>
-
-        {/* Alerts bell */}
-        <button
-          type="button"
-          className="app-topbar__icon-btn"
-          onClick={() => navigate("/alerts")}
-          aria-label={`Alerts${pending > 0 ? `, ${pending} pending` : ""}`}
-          title="Alert Center"
-        >
-          <BellIcon />
-          {pending > 0 ? <span className="app-topbar__bell-dot" aria-hidden="true" /> : null}
-        </button>
-      </div>
-    </header>
-  );
+interface TopBarProps {
+  onToggleSidebar: () => void;
 }
 
-/* ---- Breadcrumb builder ---------------------------------------- */
-interface Crumb { label: string; to?: string; }
+export default function TopBar({ onToggleSidebar }: TopBarProps) {
+  const { session, signOut } = useAuth();
+  const { role } = useRole();
+  const navigate = useNavigate();
+  const [now, setNow] = useState(Date.now());
 
-function buildCrumbs(pathname: string): Crumb[] {
-  const segments = pathname.split("/").filter(Boolean);
-  const crumbs: Crumb[] = [{ label: "FinGuard" }];
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(i);
+  }, []);
 
-  if (segments.length === 0) return crumbs;
+  const t = new Date(now);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const clock = `${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}:${pad(t.getUTCSeconds())} UTC`;
+  const date = `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}`;
 
-  const labels: Record<string, string> = {
-    dashboard: "Dashboard",
-    anomalies: "Anomalies",
-    alerts:    "Alerts",
-    policies:  "Policies",
-    users:     "Users",
-    settings:  "Settings",
+  const initials = session?.user?.email
+    ? session.user.email.slice(0, 2).toUpperCase()
+    : "??";
+
+  const handleLogout = () => {
+    signOut();
+    navigate("/login", { replace: true });
   };
 
-  segments.forEach((seg, i) => {
-    const isLast = i === segments.length - 1;
-    const label = labels[seg] ?? seg;
-    const to = "/" + segments.slice(0, i + 1).join("/");
-    crumbs.push({ label, to: isLast ? undefined : to });
-  });
-
-  return crumbs;
-}
-
-/* ---- Icons ----------------------------------------------------- */
-function SearchIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <circle cx="7" cy="7" r="4.5" />
-      <path d="M10.5 10.5l3 3" strokeLinecap="round" />
-    </svg>
-  );
-}
-function BellIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path d="M8 2a4 4 0 0 1 4 4v3l1 2H3l1-2V6a4 4 0 0 1 4-4Z" />
-      <path d="M6.5 13a1.5 1.5 0 0 0 3 0" />
-    </svg>
+    <div className="topbar">
+      <div className="brand">
+        <span className="brand-mark" />
+        <span className="brand-text">FINGUARD</span>
+      </div>
+      <div className="topbar-center">
+        <button className="tb-btn" onClick={onToggleSidebar} type="button">
+          <Icon name="menu" size={14} />
+        </button>
+        <button className="tb-btn" type="button">
+          <Icon name="search" size={14} /> Search <span className="kbd">Ctrl+K</span>
+        </button>
+        <span className="tb-divider" />
+        <span className="live-pill">
+          <span className="live-dot" />
+          LIVE
+        </span>
+        <span className="tb-divider" />
+        <span className="clock">
+          <span style={{ color: "var(--text-dim)" }}>{date}</span> {clock}
+        </span>
+      </div>
+      <div className="topbar-right">
+        {role === "analyst" && (
+          <span
+            className="badge-soft"
+            style={{
+              borderColor: "var(--sev-med)",
+              color: "var(--sev-med)",
+              letterSpacing: "0.08em",
+            }}
+          >
+            <Icon name="shield" size={11} /> READ-ONLY
+          </span>
+        )}
+        <button className="tb-btn" type="button" onClick={() => navigate("/alerts")}>
+          <Icon name="bell" size={14} />
+        </button>
+        <button className="tb-btn" type="button">
+          <Icon name="logs" size={14} />
+        </button>
+        <span className="tb-divider" />
+        <button className="user-chip" type="button" onClick={handleLogout} title="Sign out">
+          <span className="avatar">{initials}</span>
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.1 }}>
+            <span style={{ fontSize: 12 }}>{session?.user?.email ?? "user"}</span>
+            <span className="role">{role}</span>
+          </span>
+        </button>
+      </div>
+    </div>
   );
 }

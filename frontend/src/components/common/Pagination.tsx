@@ -29,22 +29,24 @@ export default function Pagination({
         <div className="pagination__controls">
           <button
             type="button"
+            className="btn sm"
             onClick={() => onPageChange(page - 1)}
             disabled={disabled || page <= 1}
             aria-label="Go to previous page"
           >
-            Previous
+            ← Previous
           </button>
           <span className="pagination__page" aria-live="polite">
-            Page {page} of {lastPage}
+            {page} / {lastPage}
           </span>
           <button
             type="button"
+            className="btn sm"
             onClick={() => onPageChange(page + 1)}
             disabled={disabled || page >= lastPage}
             aria-label="Go to next page"
           >
-            Next
+            Next →
           </button>
         </div>
       ) : null}

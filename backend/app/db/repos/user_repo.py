@@ -23,3 +23,27 @@ class UserRepository:
         return session.execute(
             select(UserRow).where(UserRow.user_id == user_id)
         ).scalar_one_or_none()
+
+    def create(
+        self, session: Session, email: str, hashed_password: str, role: str
+    ) -> UserRow:
+        user = UserRow(
+            email=email.lower().strip(),
+            hashed_password=hashed_password,
+            role=role,
+        )
+        session.add(user)
+        return user
+
+    def delete(self, session: Session, user_id: uuid.UUID) -> bool:
+        user = self.get_by_id(session, user_id)
+        if user is None:
+            return False
+        session.delete(user)
+        return True
+
+    def count_admins(self, session: Session) -> int:
+        from sqlalchemy import func
+        return session.execute(
+            select(func.count()).select_from(UserRow).where(UserRow.role == "admin")
+        ).scalar_one()

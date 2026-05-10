@@ -358,6 +358,34 @@ class AnomalyRepository:
             ).all()
         ]
 
+        # 30-day daily average
+        trend_30d = self.kpi_trend(session, 30)
+        daily_avg = round(
+            sum(d["count"] for d in trend_30d) / max(len(trend_30d), 1), 1
+        )
+
+        # MTT-ACK: p50 / p95 of (now - detected_at) for acknowledged anomalies
+        # Used as a proxy until a dedicated acknowledged_at column is added.
+        ack_rows = session.execute(
+            select(AnomalyRow.detected_at)
+            .where(AnomalyRow.status == "acknowledged")
+            .order_by(AnomalyRow.detected_at.desc())
+            .limit(200)
+        ).scalars().all()
+
+        mtt_ack_p50: float | None = None
+        mtt_ack_p95: float | None = None
+        if ack_rows:
+            now_utc = datetime.now(tz=UTC)
+            lags = sorted(
+                abs((now_utc - (r if r.tzinfo else r.replace(tzinfo=UTC))).total_seconds())
+                for r in ack_rows
+            )
+            p50_idx = max(0, int(len(lags) * 0.50) - 1)
+            p95_idx = max(0, int(len(lags) * 0.95) - 1)
+            mtt_ack_p50 = round(lags[p50_idx], 1)
+            mtt_ack_p95 = round(lags[p95_idx], 1)
+
         return {
             "total_anomalies": total,
             "open_count": status_counts.get("open", 0),
@@ -368,6 +396,9 @@ class AnomalyRepository:
             "medium_severity_count": severity_counts.get("medium", 0),
             "low_severity_count": severity_counts.get("low", 0),
             "anomalies_last_24h": last_24h,
+            "daily_avg": daily_avg,
+            "mtt_ack_p50_seconds": mtt_ack_p50,
+            "mtt_ack_p95_seconds": mtt_ack_p95,
             "top_services": top_services,
             "top_accounts": top_accounts,
         }

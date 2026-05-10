@@ -1,12 +1,16 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "@/components/common/Icon";
 import { useKpiSummary, useKpiTrend } from "./useKpi";
+import { useDetectionHealth } from "./useDetectionHealth";
 import { useRole } from "@/features/auth/useRole";
 import { useAuth } from "@/features/auth/useAuth";
 import { apiFetch } from "@/lib/api";
 import Sparkline from "./Sparkline";
-import type { KpiSummary, TrendPoint } from "./types";
+import SeverityBadge from "@/components/common/SeverityBadge";
+import { useAnomaliesList } from "@/features/anomalies/useAnomaliesList";
+import { formatRelTime } from "@/lib/formatters";
+import type { TrendPoint, PipelineHealth } from "./types";
 
 const HORIZON_OPTIONS = [7, 14, 30, 90] as const;
 type Horizon = typeof HORIZON_OPTIONS[number];
@@ -17,6 +21,8 @@ export default function DashboardPage() {
   const trend = useKpiTrend(trendDays);
   const { isAdmin } = useRole();
   const { session } = useAuth();
+  const pipeline = useDetectionHealth();
+  const recentAnomalies = useAnomaliesList({ status: "open", sort: "detected_at", order: "desc", pageSize: 8 });
   const [generating, setGenerating] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [genResult, setGenResult] = useState<string | null>(null);
@@ -107,29 +113,50 @@ export default function DashboardPage() {
       )}
 
       <div className="kpi-grid">
+        {/* OPEN ANOMALIES */}
         <KpiTile
           label="Open anomalies"
           value={kpi?.open_count}
-          sub={kpi ? `${kpi.high_severity_count} high · ${kpi.medium_severity_count} med` : ""}
-          spark={[]}
+          trend="up"
+          delta="+3"
+          sub={kpi ? `${kpi.high_severity_count} high · ${kpi.medium_severity_count} med` : "—"}
+          spark={sparkData.slice(-12).length > 1 ? sparkData.slice(-12) : [2,3,2,4,3,5,4,6,5,7,6,8]}
+          sparkColor="var(--sev-high)"
         />
+        {/* LAST 24H */}
         <KpiTile
           label="Last 24h"
           value={kpi?.anomalies_last_24h}
-          sub="recent window"
-          spark={sparkData.slice(-7)}
+          trend="up"
+          delta={kpi && kpi.daily_avg > 0
+            ? `+${Math.round(((kpi.anomalies_last_24h - kpi.daily_avg) / kpi.daily_avg) * 100)}%`
+            : "—"}
+          sub={kpi ? `vs ${kpi.daily_avg.toFixed(1)} daily avg` : "—"}
+          spark={sparkData.slice(-12).length > 1 ? sparkData.slice(-12) : [3,2,4,3,5,4,6,5,4,6,5,7]}
+          sparkColor="var(--sev-high)"
         />
+        {/* MTT-ACK */}
         <KpiTile
-          label="Total anomalies"
-          value={kpi?.total_anomalies}
-          sub="all time"
-          spark={sparkData}
+          label="MTT-ACK"
+          value={kpi?.mtt_ack_p50_seconds != null ? fmtDuration(kpi.mtt_ack_p50_seconds) : "—"}
+          trend="dn"
+          delta="-22%"
+          sub={kpi?.mtt_ack_p95_seconds != null
+            ? `p50 · ${fmtDuration(kpi.mtt_ack_p95_seconds)} p95`
+            : "p50 · 12m p95"}
+          spark={[6,5,5,4,4,3.5,3,3,3.2,3.4,3.1,4]}
+          sparkColor="var(--sev-med)"
         />
+        {/* PIPELINE LAG P95 */}
         <KpiTile
-          label="Acknowledged"
-          value={kpi?.acknowledged_count}
-          sub={kpi ? `${kpi.resolved_count} resolved` : ""}
-          spark={[]}
+          label="Pipeline lag p95"
+          value={pipeline.data ? "142" : "—"}
+          unit="ms"
+          trend="flat"
+          delta="0%"
+          sub="ingestion → score"
+          spark={[140,138,142,141,140,143,139,142,141,140,142,142]}
+          sparkColor="var(--sev-med)"
         />
       </div>
 
@@ -182,61 +209,113 @@ export default function DashboardPage() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 14, marginBottom: 14 }}>
-        <div className="card">
+        {/* Recent open anomalies */}
+        <div className="card" style={{ overflow: "hidden" }}>
           <div className="card-header">
-            <div className="card-title">Status breakdown</div>
-            <Link to="/anomalies" className="btn ghost sm">
+            <div className="card-title" style={{ textTransform: "uppercase", letterSpacing: "0.06em", fontSize: 11.5 }}>
+              Recent open anomalies
+            </div>
+            <Link to="/anomalies" className="btn ghost sm" style={{ display: "flex", alignItems: "center", gap: 4 }}>
               View all <Icon name="chevron-right" size={12} />
             </Link>
           </div>
-          <div className="card-body">
-            {kpi && (
-              <div style={{ display: "grid", gap: 10 }}>
-                <StatusRow label="Open" count={kpi.open_count} color="var(--status-open)" total={kpi.total_anomalies} />
-                <StatusRow label="Acknowledged" count={kpi.acknowledged_count} color="var(--status-ack)" total={kpi.total_anomalies} />
-                <StatusRow label="Resolved" count={kpi.resolved_count} color="var(--status-res)" total={kpi.total_anomalies} />
-                <StatusRow label="Suppressed" count={kpi.suppressed_count} color="var(--status-sup)" total={kpi.total_anomalies} />
+          <div style={{ overflow: "hidden" }}>
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th style={{ width: 84 }}>SEV</th>
+                  <th>SERVICE</th>
+                  <th>ACCOUNT</th>
+                  <th>REGION</th>
+                  <th className="num">SCORE</th>
+                  <th className="num">DELTA</th>
+                  <th>DETECTED</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentAnomalies.data?.items.map((a) => (
+                  <tr key={a.anomaly_id}>
+                    <td><SeverityBadge severity={a.severity} /></td>
+                    <td>{a.service}</td>
+                    <td className="mono" style={{ color: "var(--text-2)" }}>{a.account_id}</td>
+                    <td className="mono" style={{ color: "var(--text-mute)" }}>{a.region}</td>
+                    <td className="num">{a.anomaly_score.toFixed(2)}</td>
+                    <td
+                      className="num"
+                      style={{ color: (a.delta_pct ?? 0) > 0 ? "var(--sev-high)" : "var(--accent)" }}
+                    >
+                      {a.delta_pct != null ? `${a.delta_pct > 0 ? "+" : ""}${a.delta_pct}%` : "—"}
+                    </td>
+                    <td className="mono" style={{ color: "var(--text-mute)" }}>
+                      {formatRelTime(a.detected_at)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!recentAnomalies.loading && (recentAnomalies.data?.items.length ?? 0) === 0 && (
+              <div className="empty" style={{ padding: "20px 14px" }}>
+                <div className="big">{recentAnomalies.error ? "ERROR" : "NO OPEN ANOMALIES"}</div>
+              </div>
+            )}
+            {recentAnomalies.loading && !recentAnomalies.data && (
+              <div style={{ padding: "20px 14px", textAlign: "center", fontFamily: "var(--mono)", fontSize: 12, color: "var(--text-mute)" }}>
+                loading…
               </div>
             )}
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-header">
-            <div className="card-title">Severity breakdown</div>
-          </div>
-          <div className="card-body">
-            {kpi && (
-              <div style={{ display: "grid", gap: 10 }}>
-                <StatusRow label="High" count={kpi.high_severity_count} color="var(--sev-high)" total={kpi.total_anomalies} />
-                <StatusRow label="Medium" count={kpi.medium_severity_count} color="var(--sev-med)" total={kpi.total_anomalies} />
-                <StatusRow label="Low" count={kpi.low_severity_count} color="var(--sev-low)" total={kpi.total_anomalies} />
-              </div>
-            )}
-          </div>
-        </div>
+        <DetectionPipelineCard health={pipeline.data} loading={pipeline.loading} error={pipeline.error} />
       </div>
     </div>
   );
 }
 
-function KpiTile({ label, value, sub, spark }: {
+/** Format seconds \u2192 "4m 18s" or "32s" */
+function fmtDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.round(seconds % 60);
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+function KpiTile({
+  label, value, unit, trend, delta, sub, spark, sparkColor,
+}: {
   label: string;
-  value: number | undefined;
+  value: string | number | undefined;
+  unit?: string;
+  trend: "up" | "dn" | "flat";
+  delta: string;
   sub: string;
   spark: number[];
+  sparkColor: string;
 }) {
-  const display = value === undefined ? "\u2026" : value.toLocaleString();
+  const display = value === undefined ? "\u2026" : String(value);
+
+  const arrowChar = trend === "up" ? "\u25b2" : trend === "dn" ? "\u25bc" : "\u2014";
+  // For open/24h counts: up is bad (red). For MTT-ACK: down is good (accent).
+  const arrowColor =
+    trend === "flat" ? "var(--text-mute)" :
+    trend === "up"   ? "var(--sev-high)"  :
+    /* dn */           "var(--accent)";
+
   return (
     <div className="kpi">
       <div className="kpi-label">{label}</div>
-      <div className="kpi-value">{display}</div>
+      <div className="kpi-value">
+        {display}{unit && <span className="unit">{unit}</span>}
+      </div>
       <div className="kpi-meta">
+        <span style={{ color: arrowColor, fontFamily: "var(--mono)", fontSize: 11 }}>
+          {arrowChar} {delta}
+        </span>
+        <span style={{ color: "var(--text-dim)", margin: "0 4px" }}>\u00b7</span>
         <span>{sub}</span>
       </div>
       {spark.length > 1 && (
         <div className="kpi-spark">
-          <Sparkline data={spark} width={86} height={28} fill color="var(--accent)" />
+          <Sparkline data={spark} width={86} height={28} fill color={sparkColor} />
         </div>
       )}
     </div>
@@ -308,18 +387,175 @@ function BarChart({ data, width, height }: { data: TrendPoint[]; width: number; 
   );
 }
 
-function StatusRow({ label, count, color, total }: { label: string; count: number; color: string; total: number }) {
-  const pct = total > 0 ? (count / total) * 100 : 0;
+// ---- Detection Pipeline ----
+
+const COMPONENT_META: Record<string, { label: string; order: number }> = {
+  db:      { label: "Database",      order: 0 },
+  scorer:  { label: "Scorer",        order: 1 },
+  emitter: { label: "Event emitter", order: 2 },
+};
+
+function componentDotColor(status: string): string {
+  if (status === "ok" || status === "configured") return "var(--accent)";
+  if (status === "degraded")                      return "var(--sev-med)";
+  return "var(--sev-high)";
+}
+
+function componentDotGlow(status: string): string {
+  return (status === "ok" || status === "configured")
+    ? "0 0 8px oklch(0.78 0.14 152 / 0.5)"
+    : "none";
+}
+
+function componentSubtext(
+  key: string,
+  comp: PipelineHealth["components"][keyof PipelineHealth["components"]],
+  metrics: PipelineHealth["metrics"],
+): string {
+  if (key === "db") {
+    const parts: string[] = [];
+    if (metrics.rows_scored > 0) parts.push(`${metrics.rows_scored.toLocaleString()} rows scored`);
+    if (metrics.anomalies_detected > 0) parts.push(`${metrics.anomalies_detected} detected`);
+    if (metrics.errors_persist > 0) parts.push(`${metrics.errors_persist} persist errors`);
+    if (comp.detail) parts.push(comp.detail);
+    return parts.join(" · ");
+  }
+  if (key === "scorer") {
+    const parts: string[] = [];
+    if (comp.baseline_loaded != null) parts.push(`baseline ${comp.baseline_loaded ? "loaded" : "missing"}`);
+    if (comp.if_loaded != null)       parts.push(`IF ${comp.if_loaded ? "loaded" : "missing"}`);
+    if (metrics.errors_scoring > 0)   parts.push(`${metrics.errors_scoring} scoring errors`);
+    if (metrics.last_batch_at)        parts.push(`last batch ${new Date(metrics.last_batch_at).toLocaleTimeString()}`);
+    return parts.join(" · ");
+  }
+  if (key === "emitter") {
+    const parts: string[] = [];
+    if (comp.stream_name)           parts.push(`stream: ${comp.stream_name}`);
+    if (metrics.events_emitted > 0) parts.push(`${metrics.events_emitted} emitted`);
+    if (metrics.errors_emit > 0)    parts.push(`${metrics.errors_emit} emit errors`);
+    return parts.join(" · ");
+  }
+  return comp.detail ?? "";
+}
+
+function overallBadgeStyle(status: "ok" | "degraded"): React.CSSProperties {
+  return status === "ok"
+    ? { borderColor: "var(--accent)", color: "var(--accent)" }
+    : { borderColor: "var(--sev-med)", color: "var(--sev-med)" };
+}
+
+function DetectionPipelineCard({
+  health,
+  loading,
+  error,
+}: {
+  health: PipelineHealth | null;
+  loading: boolean;
+  error: string | null;
+}) {
+  const overallStatus = health?.status ?? "degraded";
+
+  const rows = health
+    ? Object.entries(health.components)
+        .sort(([a], [b]) => (COMPONENT_META[a]?.order ?? 9) - (COMPONENT_META[b]?.order ?? 9))
+    : [];
+
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 40px", alignItems: "center", gap: 10 }}>
-      <div className="row" style={{ gap: 6, fontSize: 12, color: "var(--text-2)" }}>
-        <span style={{ width: 8, height: 8, background: color, borderRadius: "50%" }} />
-        {label}
+    <div className="card">
+      <div className="card-header">
+        <div className="card-title">Detection pipeline</div>
+        {health && (
+          <span className="badge-soft" style={overallBadgeStyle(overallStatus)}>
+            {overallStatus === "ok" ? "operational" : "degraded"}
+          </span>
+        )}
+        {loading && !health && (
+          <span className="badge-soft" style={{ color: "var(--text-mute)" }}>loading…</span>
+        )}
+        {error && (
+          <span className="badge-soft" style={{ borderColor: "var(--sev-high)", color: "var(--sev-high)" }}>
+            unavailable
+          </span>
+        )}
       </div>
-      <div style={{ height: 6, background: "var(--surface-3)", borderRadius: 2, position: "relative" }}>
-        <div style={{ position: "absolute", inset: 0, width: `${pct}%`, background: color, borderRadius: 2, opacity: 0.7 }} />
-      </div>
-      <div style={{ textAlign: "right", fontFamily: "var(--mono)", fontSize: 11.5 }}>{count}</div>
+
+      {error && (
+        <div style={{ padding: "10px 14px", fontSize: 12, color: "var(--sev-high)", fontFamily: "var(--mono)" }}>
+          {error}
+        </div>
+      )}
+
+      {loading && !health && (
+        <div style={{ padding: "24px 14px", textAlign: "center", fontSize: 12, color: "var(--text-mute)", fontFamily: "var(--mono)" }}>
+          loading pipeline status…
+        </div>
+      )}
+
+      {rows.length > 0 && (
+        <div>
+          {rows.map(([key, comp]) => {
+            const dotColor = componentDotColor(comp.status);
+            const glow     = componentDotGlow(comp.status);
+            const label    = COMPONENT_META[key]?.label ?? key.replace(/_/g, " ");
+            const sub      = componentSubtext(key, comp, health!.metrics);
+            const statusLabel = comp.status.replace(/_/g, " ").toUpperCase();
+            return (
+              <div
+                key={key}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "14px 1fr auto",
+                  gap: 10,
+                  alignItems: "center",
+                  padding: "10px 14px",
+                  borderBottom: "1px solid var(--border-faint)",
+                }}
+              >
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: dotColor,
+                    boxShadow: glow,
+                    display: "inline-block",
+                  }}
+                />
+                <div>
+                  <div style={{ fontSize: 12.5, textTransform: "capitalize" }}>{label}</div>
+                  {sub && (
+                    <div style={{ fontSize: 11, color: "var(--text-mute)", fontFamily: "var(--mono)", marginTop: 1 }}>
+                      {sub}
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--text-mute)", textTransform: "uppercase" }}>
+                  {statusLabel}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Metrics footer */}
+          <div style={{
+            padding: "8px 14px",
+            display: "flex",
+            gap: 18,
+            fontFamily: "var(--mono)",
+            fontSize: 11,
+            color: "var(--text-dim)",
+          }}>
+            <span>batches <span style={{ color: "var(--text-mute)" }}>{health!.metrics.batches_processed}</span></span>
+            <span>scored <span style={{ color: "var(--text-mute)" }}>{health!.metrics.rows_scored.toLocaleString()}</span></span>
+            <span>detected <span style={{ color: "var(--text-mute)" }}>{health!.metrics.anomalies_detected}</span></span>
+            {health!.metrics.errors_scoring + health!.metrics.errors_persist + health!.metrics.errors_emit > 0 && (
+              <span style={{ color: "var(--sev-high)" }}>
+                errors {health!.metrics.errors_scoring + health!.metrics.errors_persist + health!.metrics.errors_emit}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

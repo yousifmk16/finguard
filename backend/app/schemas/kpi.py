@@ -32,6 +32,11 @@ class KpiSummaryResponse(BaseModel):
     medium_severity_count: int
     low_severity_count: int
     anomalies_last_24h: int
+    # 30-day average daily anomaly count (for "vs N daily avg" sub-text)
+    daily_avg: float
+    # Mean-time-to-acknowledge in seconds (p50 / p95); null when no data
+    mtt_ack_p50_seconds: float | None
+    mtt_ack_p95_seconds: float | None
     top_services: list[ServiceCount]
     top_accounts: list[AccountCount]
 

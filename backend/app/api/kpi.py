@@ -53,6 +53,9 @@ _ZERO_KPI = KpiSummaryResponse(
     medium_severity_count=0,
     low_severity_count=0,
     anomalies_last_24h=0,
+    daily_avg=0.0,
+    mtt_ack_p50_seconds=None,
+    mtt_ack_p95_seconds=None,
     top_services=[],
     top_accounts=[],
 )

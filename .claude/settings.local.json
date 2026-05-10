@@ -31,7 +31,10 @@
       "Bash(pip install:*)",
       "Bash(uvicorn app.main:app --reload --port 8000)",
       "Bash(PYTHONPATH=\"C:/Users/yousi/Documents/GitHub/finguard\" C:/Users/yousi/Documents/GitHub/finguard/backend/.venv/Scripts/python.exe:*)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(ls -la \"/c/Users/azuzs/.claude/projects/c--Users-azuzs-OneDrive-Desktop-Project-finguard/2fd650ae-9a6c-4a75-a4b8-ad2d5dc1c591/tool-results/extracted/\")",
+      "Read(//c/Users/azuzs/.claude/projects/c--Users-azuzs-OneDrive-Desktop-Project-finguard/2fd650ae-9a6c-4a75-a4b8-ad2d5dc1c591/tool-results/extracted//**)"
     ]
   }
 }

@@ -4,8 +4,10 @@ import Icon from "@/components/common/Icon";
 import SeverityBadge from "@/components/common/SeverityBadge";
 import StatusBadge from "@/components/common/StatusBadge";
 import Pagination from "@/components/common/Pagination";
+import AnomalyStatusCounter from "@/components/common/AnomalyStatusCounter";
 import { formatRelTime, formatScore } from "@/lib/formatters";
 import { useAnomaliesList } from "./useAnomaliesList";
+import { useKpiSummary } from "@/features/dashboard/useKpi";
 import type { AnomalyListQuery, AnomalySeverity, AnomalyStatus } from "./types";
 
 const PAGE_SIZE = 20;
@@ -28,6 +30,8 @@ export default function AnomaliesListPage() {
   }), [page, severity, status, service]);
 
   const { data, loading, error, reload } = useAnomaliesList(query);
+  const kpiSummary = useKpiSummary();
+  const kpi = kpiSummary.data;
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
   const pages = data?.pages ?? 0;
@@ -64,6 +68,13 @@ export default function AnomaliesListPage() {
           </button>
         </div>
       </div>
+
+      <AnomalyStatusCounter
+        open={kpi?.open_count ?? 0}
+        acknowledged={kpi?.acknowledged_count ?? 0}
+        resolved={kpi?.resolved_count ?? 0}
+        suppressed={kpi?.suppressed_count ?? 0}
+      />
 
       <div className="filter-bar">
         <input

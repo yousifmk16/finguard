@@ -12,7 +12,6 @@ export default function Sidebar() {
     if (id === "dashboard") return path === "/" || path === "/dashboard";
     if (id === "anomalies") return path.startsWith("/anomalies");
     if (id === "alerts") return path === "/alerts";
-    if (id === "policies") return path === "/policies";
     if (id === "settings") return path === "/settings";
     if (id === "users") return path === "/users";
     if (id === "model-training") return path === "/model-training";
@@ -23,7 +22,6 @@ export default function Sidebar() {
     { id: "dashboard", icon: "dashboard", label: "Operations", to: "/dashboard" },
     { id: "anomalies", icon: "alert", label: "Anomalies", to: "/anomalies" },
     { id: "alerts", icon: "bell", label: "Alerts", to: "/alerts" },
-    { id: "policies", icon: "policy", label: "Policies", to: "/policies" },
   ];
 
   const items2 = [

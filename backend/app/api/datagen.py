@@ -138,7 +138,7 @@ _DEMO_GCP_USAGE: dict[str, tuple[str, float]] = {
 }
 
 
-def _generate_gcp_demo_records(seed: int, days: int = 365) -> list[dict]:
+def _generate_gcp_demo_records(seed: int, days: int = 90) -> list[dict]:
     """Generate GCP Cloud Billing style records with injected spike anomalies.
 
     Mirrors the pattern used in training._seed_gcp_training_data:
@@ -307,7 +307,7 @@ def generate_data(
 
         for ev in records:
             batch.append(BillingEventRow(
-                event_id=str(ev["event_id"]),
+                event_id=ev["event_id"] if isinstance(ev["event_id"], uuid.UUID) else uuid.UUID(str(ev["event_id"])),
                 timestamp=ev["timestamp"],
                 provider=ev.get("provider", "gcp"),
                 account_id=ev["account_id"],

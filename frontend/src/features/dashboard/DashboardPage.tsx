@@ -8,9 +8,10 @@ import { useAuth } from "@/features/auth/useAuth";
 import { apiFetch } from "@/lib/api";
 import Sparkline from "./Sparkline";
 import SeverityBadge from "@/components/common/SeverityBadge";
+import AnomalyStatusCounter from "@/components/common/AnomalyStatusCounter";
 import { useAnomaliesList } from "@/features/anomalies/useAnomaliesList";
 import { formatRelTime } from "@/lib/formatters";
-import type { TrendPoint, PipelineHealth } from "./types";
+import type { TrendPoint } from "./types";
 
 const HORIZON_OPTIONS = [7, 14, 30, 90] as const;
 type Horizon = typeof HORIZON_OPTIONS[number];
@@ -115,7 +116,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="kpi-grid">
+      <div className="kpi-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
         {/* OPEN ANOMALIES */}
         <KpiTile
           label="Open anomalies"
@@ -143,18 +144,6 @@ export default function DashboardPage() {
             />
           );
         })()}
-        {/* MTT-ACK */}
-        <KpiTile
-          label="MTT-ACK"
-          value={kpi?.mtt_ack_p50_seconds != null ? fmtDuration(kpi.mtt_ack_p50_seconds) : "—"}
-          trend="dn"
-          delta="-22%"
-          sub={kpi?.mtt_ack_p95_seconds != null
-            ? `p50 · ${fmtDuration(kpi.mtt_ack_p95_seconds)} p95`
-            : "p50 · 12m p95"}
-          spark={[6,5,5,4,4,3.5,3,3,3.2,3.4,3.1,4]}
-          sparkColor="var(--sev-med)"
-        />
         {/* PIPELINE LAG P95 */}
         <KpiTile
           label="Pipeline lag p95"
@@ -171,6 +160,13 @@ export default function DashboardPage() {
           sparkColor="var(--sev-med)"
         />
       </div>
+
+      <AnomalyStatusCounter
+        open={kpi?.open_count ?? 0}
+        acknowledged={kpi?.acknowledged_count ?? 0}
+        resolved={kpi?.resolved_count ?? 0}
+        suppressed={kpi?.suppressed_count ?? 0}
+      />
 
       <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 14, marginBottom: 14 }}>
         <div className="card">
@@ -220,76 +216,65 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 14, marginBottom: 14 }}>
-        {/* Recent open anomalies */}
-        <div className="card" style={{ overflow: "hidden" }}>
-          <div className="card-header">
-            <div className="card-title" style={{ textTransform: "uppercase", letterSpacing: "0.06em", fontSize: 11.5 }}>
-              Recent open anomalies
-            </div>
-            <Link to="/anomalies" className="btn ghost sm" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              View all <Icon name="chevron-right" size={12} />
-            </Link>
+      <div className="card" style={{ overflow: "hidden", marginBottom: 14 }}>
+        <div className="card-header">
+          <div className="card-title" style={{ textTransform: "uppercase", letterSpacing: "0.06em", fontSize: 11.5 }}>
+            Recent open anomalies
           </div>
-          <div style={{ overflow: "hidden" }}>
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th style={{ width: 84 }}>SEV</th>
-                  <th>SERVICE</th>
-                  <th>ACCOUNT</th>
-                  <th>REGION</th>
-                  <th className="num">SCORE</th>
-                  <th className="num">DELTA</th>
-                  <th>DETECTED</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentAnomalies.data?.items.map((a) => (
-                  <tr key={a.anomaly_id}>
-                    <td><SeverityBadge severity={a.severity} /></td>
-                    <td>{a.service}</td>
-                    <td className="mono" style={{ color: "var(--text-2)" }}>{a.account_id}</td>
-                    <td className="mono" style={{ color: "var(--text-mute)" }}>{a.region}</td>
-                    <td className="num">{a.anomaly_score.toFixed(2)}</td>
-                    <td
-                      className="num"
-                      style={{ color: (a.delta_pct ?? 0) > 0 ? "var(--sev-high)" : "var(--accent)" }}
-                    >
-                      {a.delta_pct != null ? `${a.delta_pct > 0 ? "+" : ""}${a.delta_pct}%` : "—"}
-                    </td>
-                    <td className="mono" style={{ color: "var(--text-mute)" }}>
-                      {formatRelTime(a.detected_at)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {!recentAnomalies.loading && (recentAnomalies.data?.items.length ?? 0) === 0 && (
-              <div className="empty" style={{ padding: "20px 14px" }}>
-                <div className="big">{recentAnomalies.error ? "ERROR" : "NO OPEN ANOMALIES"}</div>
-              </div>
-            )}
-            {recentAnomalies.loading && !recentAnomalies.data && (
-              <div style={{ padding: "20px 14px", textAlign: "center", fontFamily: "var(--mono)", fontSize: 12, color: "var(--text-mute)" }}>
-                loading…
-              </div>
-            )}
-          </div>
+          <Link to="/anomalies" className="btn ghost sm" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            View all <Icon name="chevron-right" size={12} />
+          </Link>
         </div>
-
-        <DetectionPipelineCard health={pipeline.data} loading={pipeline.loading} error={pipeline.error} />
+        <div style={{ overflow: "hidden" }}>
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th style={{ width: 84 }}>SEV</th>
+                <th>SERVICE</th>
+                <th>ACCOUNT</th>
+                <th>REGION</th>
+                <th className="num">SCORE</th>
+                <th className="num">DELTA</th>
+                <th>DETECTED</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentAnomalies.data?.items.map((a) => (
+                <tr key={a.anomaly_id}>
+                  <td><SeverityBadge severity={a.severity} /></td>
+                  <td>{a.service}</td>
+                  <td className="mono" style={{ color: "var(--text-2)" }}>{a.account_id}</td>
+                  <td className="mono" style={{ color: "var(--text-mute)" }}>{a.region}</td>
+                  <td className="num">{a.anomaly_score.toFixed(2)}</td>
+                  <td
+                    className="num"
+                    style={{ color: (a.delta_pct ?? 0) > 0 ? "var(--sev-high)" : "var(--accent)" }}
+                  >
+                    {a.delta_pct != null ? `${a.delta_pct > 0 ? "+" : ""}${a.delta_pct}%` : "—"}
+                  </td>
+                  <td className="mono" style={{ color: "var(--text-mute)" }}>
+                    {formatRelTime(a.detected_at)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!recentAnomalies.loading && (recentAnomalies.data?.items.length ?? 0) === 0 && (
+            <div className="empty" style={{ padding: "20px 14px" }}>
+              <div className="big">{recentAnomalies.error ? "ERROR" : "NO OPEN ANOMALIES"}</div>
+            </div>
+          )}
+          {recentAnomalies.loading && !recentAnomalies.data && (
+            <div style={{ padding: "20px 14px", textAlign: "center", fontFamily: "var(--mono)", fontSize: 12, color: "var(--text-mute)" }}>
+              loading…
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-/** Format seconds \u2192 "4m 18s" or "32s" */
-function fmtDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  return m > 0 ? `${m}m ${s}s` : `${s}s`;
-}
 
 function KpiTile({
   label, value, unit, trend, delta, sub, spark, sparkColor,
@@ -399,175 +384,3 @@ function BarChart({ data, width, height }: { data: TrendPoint[]; width: number; 
   );
 }
 
-// ---- Detection Pipeline ----
-
-const COMPONENT_META: Record<string, { label: string; order: number }> = {
-  db:      { label: "Database",      order: 0 },
-  scorer:  { label: "Scorer",        order: 1 },
-  emitter: { label: "Event emitter", order: 2 },
-};
-
-function componentDotColor(status: string): string {
-  if (status === "ok" || status === "configured") return "var(--accent)";
-  if (status === "degraded")                      return "var(--sev-med)";
-  return "var(--sev-high)";
-}
-
-function componentDotGlow(status: string): string {
-  return (status === "ok" || status === "configured")
-    ? "0 0 8px oklch(0.78 0.14 152 / 0.5)"
-    : "none";
-}
-
-function componentSubtext(
-  key: string,
-  comp: PipelineHealth["components"][keyof PipelineHealth["components"]],
-  metrics: PipelineHealth["metrics"],
-): string {
-  if (key === "db") {
-    const parts: string[] = [];
-    if (metrics.rows_scored > 0) parts.push(`${metrics.rows_scored.toLocaleString()} rows scored`);
-    if (metrics.anomalies_detected > 0) parts.push(`${metrics.anomalies_detected} detected`);
-    if (metrics.errors_persist > 0) parts.push(`${metrics.errors_persist} persist errors`);
-    if (comp.detail) parts.push(comp.detail);
-    return parts.join(" · ");
-  }
-  if (key === "scorer") {
-    const parts: string[] = [];
-    if (comp.baseline_loaded != null) parts.push(`baseline ${comp.baseline_loaded ? "loaded" : "missing"}`);
-    if (comp.if_loaded != null)       parts.push(`IF ${comp.if_loaded ? "loaded" : "missing"}`);
-    if (metrics.errors_scoring > 0)   parts.push(`${metrics.errors_scoring} scoring errors`);
-    if (metrics.last_batch_at)        parts.push(`last batch ${new Date(metrics.last_batch_at).toLocaleTimeString()}`);
-    return parts.join(" · ");
-  }
-  if (key === "emitter") {
-    const parts: string[] = [];
-    if (comp.stream_name)           parts.push(`stream: ${comp.stream_name}`);
-    if (metrics.events_emitted > 0) parts.push(`${metrics.events_emitted} emitted`);
-    if (metrics.errors_emit > 0)    parts.push(`${metrics.errors_emit} emit errors`);
-    return parts.join(" · ");
-  }
-  return comp.detail ?? "";
-}
-
-function overallBadgeStyle(status: "ok" | "degraded"): React.CSSProperties {
-  return status === "ok"
-    ? { borderColor: "var(--accent)", color: "var(--accent)" }
-    : { borderColor: "var(--sev-med)", color: "var(--sev-med)" };
-}
-
-function DetectionPipelineCard({
-  health,
-  loading,
-  error,
-}: {
-  health: PipelineHealth | null;
-  loading: boolean;
-  error: string | null;
-}) {
-  const overallStatus = health?.status ?? "degraded";
-
-  const rows = health
-    ? Object.entries(health.components)
-        .sort(([a], [b]) => (COMPONENT_META[a]?.order ?? 9) - (COMPONENT_META[b]?.order ?? 9))
-    : [];
-
-  return (
-    <div className="card">
-      <div className="card-header">
-        <div className="card-title">Detection pipeline</div>
-        {health && (
-          <span className="badge-soft" style={overallBadgeStyle(overallStatus)}>
-            {overallStatus === "ok" ? "operational" : "degraded"}
-          </span>
-        )}
-        {loading && !health && (
-          <span className="badge-soft" style={{ color: "var(--text-mute)" }}>loading…</span>
-        )}
-        {error && (
-          <span className="badge-soft" style={{ borderColor: "var(--sev-high)", color: "var(--sev-high)" }}>
-            unavailable
-          </span>
-        )}
-      </div>
-
-      {error && (
-        <div style={{ padding: "10px 14px", fontSize: 12, color: "var(--sev-high)", fontFamily: "var(--mono)" }}>
-          {error}
-        </div>
-      )}
-
-      {loading && !health && (
-        <div style={{ padding: "24px 14px", textAlign: "center", fontSize: 12, color: "var(--text-mute)", fontFamily: "var(--mono)" }}>
-          loading pipeline status…
-        </div>
-      )}
-
-      {rows.length > 0 && (
-        <div>
-          {rows.map(([key, comp]) => {
-            const dotColor = componentDotColor(comp.status);
-            const glow     = componentDotGlow(comp.status);
-            const label    = COMPONENT_META[key]?.label ?? key.replace(/_/g, " ");
-            const sub      = componentSubtext(key, comp, health!.metrics);
-            const statusLabel = comp.status.replace(/_/g, " ").toUpperCase();
-            return (
-              <div
-                key={key}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "14px 1fr auto",
-                  gap: 10,
-                  alignItems: "center",
-                  padding: "10px 14px",
-                  borderBottom: "1px solid var(--border-faint)",
-                }}
-              >
-                <span
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: dotColor,
-                    boxShadow: glow,
-                    display: "inline-block",
-                  }}
-                />
-                <div>
-                  <div style={{ fontSize: 12.5, textTransform: "capitalize" }}>{label}</div>
-                  {sub && (
-                    <div style={{ fontSize: 11, color: "var(--text-mute)", fontFamily: "var(--mono)", marginTop: 1 }}>
-                      {sub}
-                    </div>
-                  )}
-                </div>
-                <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--text-mute)", textTransform: "uppercase" }}>
-                  {statusLabel}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Metrics footer */}
-          <div style={{
-            padding: "8px 14px",
-            display: "flex",
-            gap: 18,
-            fontFamily: "var(--mono)",
-            fontSize: 11,
-            color: "var(--text-dim)",
-          }}>
-            <span>batches <span style={{ color: "var(--text-mute)" }}>{health!.metrics.batches_processed}</span></span>
-            <span>scored <span style={{ color: "var(--text-mute)" }}>{health!.metrics.rows_scored.toLocaleString()}</span></span>
-            <span>detected <span style={{ color: "var(--text-mute)" }}>{health!.metrics.anomalies_detected}</span></span>
-            {health!.metrics.errors_scoring + health!.metrics.errors_persist + health!.metrics.errors_emit > 0 && (
-              <span style={{ color: "var(--sev-high)" }}>
-                errors {health!.metrics.errors_scoring + health!.metrics.errors_persist + health!.metrics.errors_emit}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}

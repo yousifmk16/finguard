@@ -7,7 +7,6 @@ import DashboardPage from "@/features/dashboard/DashboardPage";
 import AnomaliesListPage from "@/features/anomalies/AnomaliesListPage";
 import AnomalyDetailPage from "@/features/anomalies/AnomalyDetailPage";
 import AlertCenterPage from "@/features/alerts/AlertCenterPage";
-import PoliciesPage from "@/features/policies/PoliciesPage";
 import UsersPage from "@/features/users/UsersPage";
 import SettingsPage from "@/features/settings/SettingsPage";
 import ModelTrainingPage from "@/features/training/ModelTrainingPage";
@@ -33,7 +32,6 @@ export default function AppRouter() {
         <Route path="/anomalies/:anomalyId" element={<AnomalyDetailPage />} />
         <Route path="/alerts" element={<AlertCenterPage />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/policies" element={<PoliciesPage />} />
         <Route
           path="/users"
           element={

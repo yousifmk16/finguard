@@ -34,7 +34,7 @@ class BillingEventRow(Base):
     tags: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )
-    source_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    source_type: Mapped[str] = mapped_column(String(32), nullable=False)
     ingested_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=text("now()"),

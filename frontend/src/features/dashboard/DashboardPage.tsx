@@ -44,6 +44,8 @@ export default function DashboardPage() {
       setGenResult(`✓ ${res.accepted} events · ${res.anomalies_seeded} anomalies · ${res.alerts_seeded} alerts (seed ${res.seed_used})`);
       summary.reload();
       trend.reload();
+      recentAnomalies.reload();
+      pipeline.reload();
     } catch (e: unknown) {
       setGenResult(`Error: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
@@ -63,6 +65,8 @@ export default function DashboardPage() {
       setGenResult(`✓ Cleared — ${res.events_deleted} events, ${res.anomalies_deleted} anomalies, ${res.alerts_deleted} alerts deleted`);
       summary.reload();
       trend.reload();
+      recentAnomalies.reload();
+      pipeline.reload();
     } catch (e: unknown) {
       setGenResult(`Error: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
@@ -87,12 +91,11 @@ export default function DashboardPage() {
                 {deleting ? "Clearing\u2026" : "Clear data"}
               </button>
               <button className="btn ghost" type="button" onClick={handleGenerate} disabled={generating || deleting}>
-                <Icon name="sparkles" size={14} />
-                {generating ? "Generating\u2026" : "Generate data"}
+                {generating ? "Generating\u2026" : "DEMO"}
               </button>
             </>
           )}
-          <button className="btn" type="button" onClick={() => { summary.reload(); trend.reload(); }} disabled={loading}>
+          <button className="btn" type="button" onClick={() => { summary.reload(); trend.reload(); recentAnomalies.reload(); pipeline.reload(); }} disabled={loading}>
             {loading ? "Refreshing\u2026" : "Refresh"}
           </button>
         </div>
@@ -124,17 +127,22 @@ export default function DashboardPage() {
           sparkColor="var(--sev-high)"
         />
         {/* LAST 24H */}
-        <KpiTile
-          label="Last 24h"
-          value={kpi?.anomalies_last_24h}
-          trend="up"
-          delta={kpi && kpi.daily_avg > 0
-            ? `+${Math.round(((kpi.anomalies_last_24h - kpi.daily_avg) / kpi.daily_avg) * 100)}%`
-            : "—"}
-          sub={kpi ? `vs ${kpi.daily_avg.toFixed(1)} daily avg` : "—"}
-          spark={sparkData.slice(-12).length > 1 ? sparkData.slice(-12) : [3,2,4,3,5,4,6,5,4,6,5,7]}
-          sparkColor="var(--sev-high)"
-        />
+        {(() => {
+          const pct = kpi && kpi.daily_avg > 0
+            ? Math.round(((kpi.anomalies_last_24h - kpi.daily_avg) / kpi.daily_avg) * 100)
+            : null;
+          return (
+            <KpiTile
+              label="Last 24h"
+              value={kpi?.anomalies_last_24h}
+              trend={pct == null ? "flat" : pct > 0 ? "up" : pct < 0 ? "dn" : "flat"}
+              delta={pct == null ? "—" : pct > 0 ? `+${pct}%` : `${pct}%`}
+              sub={kpi ? `vs ${kpi.daily_avg.toFixed(1)} daily avg` : "—"}
+              spark={sparkData.slice(-12).length > 1 ? sparkData.slice(-12) : [3,2,4,3,5,4,6,5,4,6,5,7]}
+              sparkColor="var(--sev-high)"
+            />
+          );
+        })()}
         {/* MTT-ACK */}
         <KpiTile
           label="MTT-ACK"
@@ -150,12 +158,16 @@ export default function DashboardPage() {
         {/* PIPELINE LAG P95 */}
         <KpiTile
           label="Pipeline lag p95"
-          value={pipeline.data ? "142" : "—"}
-          unit="ms"
+          value={pipeline.data?.lag_p95_ms != null
+            ? Math.round(pipeline.data.lag_p95_ms)
+            : pipeline.loading ? undefined : "—"}
+          unit={pipeline.data?.lag_p95_ms != null ? "ms" : undefined}
           trend="flat"
-          delta="0%"
+          delta="—"
           sub="ingestion → score"
-          spark={[140,138,142,141,140,143,139,142,141,140,142,142]}
+          spark={pipeline.data?.lag_p95_ms != null
+            ? Array(12).fill(Math.round(pipeline.data.lag_p95_ms))
+            : []}
           sparkColor="var(--sev-med)"
         />
       </div>
@@ -310,7 +322,7 @@ function KpiTile({
         <span style={{ color: arrowColor, fontFamily: "var(--mono)", fontSize: 11 }}>
           {arrowChar} {delta}
         </span>
-        <span style={{ color: "var(--text-dim)", margin: "0 4px" }}>\u00b7</span>
+        <span style={{ color: "var(--text-dim)", margin: "0 4px" }}>{"\u00b7"}</span>
         <span>{sub}</span>
       </div>
       {spark.length > 1 && (

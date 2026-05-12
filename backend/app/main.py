@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.alerts import router as alerts_router
 from app.api.cloud_connections import router as cloud_connections_router
 from app.api.datagen import router as datagen_router
+from app.api.training import router as training_router
 from app.api.settings import router as settings_router
 from app.api.users import router as users_router
 from app.api.anomalies import router as anomalies_router
@@ -125,5 +126,6 @@ app.include_router(detection_router)
 app.include_router(audit_router)
 app.include_router(users_router)
 app.include_router(datagen_router)
+app.include_router(training_router)
 app.include_router(settings_router)
 app.include_router(cloud_connections_router)

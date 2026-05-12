@@ -15,7 +15,7 @@ export default function Sidebar() {
     if (id === "policies") return path === "/policies";
     if (id === "settings") return path === "/settings";
     if (id === "users") return path === "/users";
-    if (id === "datagen") return path === "/datagen";
+    if (id === "model-training") return path === "/model-training";
     return false;
   };
 
@@ -29,7 +29,7 @@ export default function Sidebar() {
   const items2 = [
     { id: "settings", icon: "settings", label: "Settings", to: "/settings" },
     ...(isAdmin ? [{ id: "users", icon: "users", label: "Users", to: "/users" }] : []),
-    ...(isAdmin ? [{ id: "datagen", icon: "sparkles", label: "Data Gen", to: "/datagen" }] : []),
+    ...(isAdmin ? [{ id: "model-training", icon: "play", label: "Model Training", to: "/model-training" }] : []),
   ];
 
   return (

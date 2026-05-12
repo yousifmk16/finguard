@@ -114,6 +114,48 @@ def _emitter_status() -> dict[str, Any]:
     }
 
 
+def _pipeline_lag_p95_ms(db: Session | None) -> float | None:
+    """
+    Compute the p95 pipeline lag in milliseconds from the DB.
+
+    Lag = MAX(0, detected_at - ingested_at) for anomalies whose source billing
+    events were ingested in the last 7 days.  The join uses the exact timestamp
+    match (anomaly.bucket == billing_event.timestamp) which holds for both
+    synchronously-seeded demo data and real scored events.
+
+    Returns None when there is no matching data.
+    """
+    if db is None:
+        return None
+    try:
+        row = db.execute(text("""
+            WITH recent_events AS (
+                SELECT account_id, service, region, timestamp, ingested_at
+                FROM billing_events_raw
+                WHERE ingested_at > NOW() - INTERVAL '7 days'
+                LIMIT 2000
+            )
+            SELECT PERCENTILE_CONT(0.95) WITHIN GROUP (
+                ORDER BY GREATEST(0,
+                    EXTRACT(EPOCH FROM (a.detected_at - e.ingested_at)) * 1000
+                )
+            ) AS lag_p95_ms
+            FROM anomalies a
+            JOIN recent_events e ON (
+                e.account_id = a.account_id
+                AND e.service    = a.service
+                AND e.region     = a.region
+                AND e.timestamp  = a.bucket
+            )
+        """)).fetchone()
+        if row is None or row[0] is None:
+            return None
+        return round(float(row[0]), 1)
+    except Exception as exc:
+        logger.warning("DET-03: lag p95 query failed: %s", exc)
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -155,6 +197,7 @@ def detection_health(
             "emitter": _emitter_status(),
         },
         "metrics": detection_metrics.snapshot(),
+        "lag_p95_ms": _pipeline_lag_p95_ms(db),
     }
 
 

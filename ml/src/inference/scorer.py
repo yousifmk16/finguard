@@ -7,7 +7,7 @@ Combines three complementary anomaly signals into a single per-row
     Signal          Source      Weight (default)
     ──────────────  ──────────  ────────────────
     ts_signal       TS-03       0.35   (z-score normalised to [0, 1])
-    if_score        ML-01       0.40   (IsolationForest anomaly score)
+    if_score        ML-01b      0.40   (Autoencoder reconstruction error)
     rule_score      RUL-01/03   0.25   (blended deterministic rules)
 
     anomaly_score = w_ts × ts_signal + w_if × if_score + w_rules × rule_score
@@ -81,7 +81,7 @@ import numpy as np
 import pandas as pd
 
 from ml.src.models.baseline import TimeSeriesBaselineModel
-from ml.src.models.isolation_forest import IsolationForestDetector
+from ml.src.models.autoencoder import AutoencoderDetector
 from ml.src.models.residuals import ResidualScorer, ResidualConfig
 from ml.src.inference.severity import SeverityMapper, SeverityConfig
 from services.rules.engine import (
@@ -218,7 +218,7 @@ class OnlineScorer:
         self._severity_mapper: Optional[SeverityMapper] = severity_mapper
         self._lock = threading.RLock()
         self._baseline: Optional[TimeSeriesBaselineModel] = None
-        self._detector: Optional[IsolationForestDetector] = None
+        self._detector: Optional[AutoencoderDetector] = None
         self._residual_scorer = ResidualScorer(
             ResidualConfig(
                 target_col=self.config.target_col,
@@ -256,8 +256,8 @@ class OnlineScorer:
             Directory containing the TimeSeriesBaselineModel artifacts
             (baseline_config.json + baseline_seasonal_profile.json).
         if_dir:
-            Directory containing the IsolationForestDetector artifacts
-            (if_model.pkl + if_config.json + if_meta.json).
+            Directory containing the AutoencoderDetector artifacts
+            (ae_model.pkl + ae_config.json + ae_meta.json).
         config:
             ScoringConfig instance.  Defaults to ScoringConfig().
         severity_mapper:
@@ -303,13 +303,13 @@ class OnlineScorer:
 
         if self.config.enable_if:
             try:
-                detector = IsolationForestDetector.load(if_dir)
+                detector = AutoencoderDetector.load(if_dir)
                 self.set_detector(detector)
-                logger.info("Loaded IF detector from %s", if_dir)
+                logger.info("Loaded autoencoder detector from %s", if_dir)
             except FileNotFoundError:
                 logger.warning(
-                    "IF detector not found at '%s'. "
-                    "IF signal will be zero until the model is trained.",
+                    "Autoencoder detector not found at '%s'. "
+                    "AE signal will be zero until the model is trained.",
                     if_dir,
                 )
 
@@ -327,15 +327,15 @@ class OnlineScorer:
             self._baseline = model
         logger.info("OnlineScorer: baseline model hot-swapped")
 
-    def set_detector(self, detector: IsolationForestDetector) -> None:
+    def set_detector(self, detector: AutoencoderDetector) -> None:
         """
-        Atomically replace the live IF detector.
+        Atomically replace the live autoencoder detector.
 
-        Designed to be passed as `on_success` after an IF retrain job.
+        Designed to be passed as `on_success` after an AE retrain job.
         """
         with self._lock:
             self._detector = detector
-        logger.info("OnlineScorer: IF detector hot-swapped")
+        logger.info("OnlineScorer: autoencoder detector hot-swapped")
 
     # ------------------------------------------------------------------
     # Public scoring API
@@ -438,16 +438,16 @@ class OnlineScorer:
         return df
 
     # ------------------------------------------------------------------
-    # Internal: ML-01 IF signal
+    # Internal: ML-01b Autoencoder signal
     # ------------------------------------------------------------------
 
     def _apply_if(
         self,
         df: pd.DataFrame,
-        detector: Optional[IsolationForestDetector],
+        detector: Optional[AutoencoderDetector],
     ) -> pd.DataFrame:
         """
-        Run IsolationForestDetector.predict().
+        Run AutoencoderDetector.predict().
 
         If the detector is unavailable, if_score and if_anomaly are NaN/0.
         """
@@ -461,7 +461,7 @@ class OnlineScorer:
             df["if_score"] = scored["if_score"]
             df["if_anomaly"] = scored["if_anomaly"]
         except Exception:
-            logger.exception("IF scoring failed; if_score set to NaN")
+            logger.exception("Autoencoder scoring failed; if_score set to NaN")
             df["if_score"] = np.nan
             df["if_anomaly"] = np.int8(0)
 
@@ -607,7 +607,7 @@ class OnlineScorer:
 
     @property
     def has_detector(self) -> bool:
-        """True if an IF detector has been loaded."""
+        """True if an autoencoder detector has been loaded."""
         with self._lock:
             return self._detector is not None
 
@@ -623,7 +623,7 @@ class OnlineScorer:
         sev_cfg = self._severity_mapper.config if self._severity_mapper else None
         return {
             "baseline_loaded": self.has_baseline,
-            "if_loaded": self.has_detector,
+            "ae_loaded": self.has_detector,
             "config": {
                 "weight_ts": self.config.weight_ts,
                 "weight_if": self.config.weight_if,

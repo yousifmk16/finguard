@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/features/auth/useAuth";
 import { useRole } from "@/features/auth/useRole";
 import { apiFetch } from "@/lib/api";
@@ -12,6 +12,8 @@ import {
   removeConnection,
 } from "./cloud-api";
 import type { ConnectionStatus } from "./cloud-api";
+import { listProfiles, activateProfile } from "@/features/training/training-api";
+import type { FinGuardProfile } from "@/features/training/training-api";
 
 export default function SettingsPage() {
   const { session } = useAuth();
@@ -87,6 +89,9 @@ export default function SettingsPage() {
         {/* Members */}
         <MembersCard />
       </div>
+
+      {/* FinGuard active model — admin only */}
+      {isAdmin && <FinGuardModelCard />}
 
       {/* Cloud connections — admin only */}
       {isAdmin && <CloudConnectionsCard />}
@@ -267,6 +272,155 @@ function MemberRow({ email, memberRole, you }: { email: string; memberRole: stri
       <span className="mono" style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.04em", color: memberRole === "admin" ? "var(--accent)" : "var(--text-mute)" }}>
         {memberRole}
       </span>
+    </div>
+  );
+}
+
+function FinGuardModelCard() {
+  const { session } = useAuth();
+  const [profiles, setProfiles] = useState<FinGuardProfile[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [activating, setActivating] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!session) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await listProfiles(session.token);
+      setProfiles(res.profiles);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to load profiles");
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleActivate = async (id: string) => {
+    if (!session) return;
+    setActivating(id);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const res = await activateProfile(id, session.token);
+      setProfiles(res.profiles);
+      const name = res.profiles.find((p) => p.id === id)?.name ?? id;
+      setSuccessMsg(`"${name}" is now the live model`);
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to activate");
+    } finally {
+      setActivating(null);
+    }
+  };
+
+  const dot = (color: string) => (
+    <span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0 }} />
+  );
+
+  return (
+    <div className="card" style={{ marginBottom: 14 }}>
+      <div className="card-header">
+        <div>
+          <div className="card-title">FinGuard — Active model</div>
+          <div style={{ fontSize: 11.5, color: "var(--text-dim)", marginTop: 2 }}>
+            Select which FinGuard profile reads live billing events for anomaly detection.
+          </div>
+        </div>
+        <button className="btn ghost sm" type="button" onClick={load} disabled={loading}>
+          {loading ? "Loading…" : "Refresh"}
+        </button>
+      </div>
+
+      {error && (
+        <div style={{ margin: "0 14px 10px", padding: "8px 10px", background: "var(--sev-high-bg)", border: "1px solid var(--sev-high)", borderRadius: "var(--r-md)", fontSize: 12, color: "var(--sev-high)" }}>
+          {error}
+        </div>
+      )}
+      {successMsg && (
+        <div style={{ margin: "0 14px 10px", padding: "8px 10px", background: "var(--accent-dim)", border: "1px solid var(--accent)", borderRadius: "var(--r-md)", fontSize: 12, color: "var(--accent)" }}>
+          {successMsg}
+        </div>
+      )}
+
+      <div className="card-body" style={{ display: "grid", gap: 8 }}>
+        {profiles.length === 0 && !loading && (
+          <div style={{ fontSize: 12, color: "var(--text-mute)", fontFamily: "var(--mono)" }}>
+            No profiles found. Go to Model Training to create one.
+          </div>
+        )}
+        {profiles.map((p) => {
+          const bothTrained = p.baseline.trained && p.autoencoder.trained;
+          const eitherTrained = p.baseline.trained || p.autoencoder.trained;
+          const statusColor = bothTrained ? "var(--accent)" : eitherTrained ? "var(--sev-med)" : "var(--sev-high)";
+          const statusLabel = bothTrained ? "fully trained" : eitherTrained ? "partial" : "untrained";
+
+          return (
+            <div
+              key={p.id}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr auto",
+                alignItems: "center",
+                gap: 12,
+                padding: "10px 12px",
+                borderRadius: "var(--r-md)",
+                border: `1px solid ${p.active ? "var(--accent)" : "var(--border-faint)"}`,
+                background: p.active ? "var(--accent-dim)" : "transparent",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {dot(statusColor)}
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: p.active ? 700 : 500, color: p.active ? "var(--accent)" : "var(--text-1)" }}>
+                      {p.name}
+                    </span>
+                    {p.active && (
+                      <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 999, background: "var(--accent)", color: "var(--bg-0)", fontFamily: "var(--mono)", fontWeight: 700 }}>
+                        LIVE
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 11, fontFamily: "var(--mono)", color: "var(--text-dim)", marginTop: 2 }}>
+                    {statusLabel}
+                    {p.baseline.trained && p.baseline.last_trained_at && (
+                      <span style={{ marginLeft: 8 }}>· baseline {formatRelTime(p.baseline.last_trained_at)}</span>
+                    )}
+                    {p.autoencoder.trained && p.autoencoder.last_trained_at && (
+                      <span style={{ marginLeft: 8 }}>· autoencoder {formatRelTime(p.autoencoder.last_trained_at)}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {p.active ? (
+                <span style={{ fontSize: 11, fontFamily: "var(--mono)", color: "var(--text-mute)" }}>active</span>
+              ) : (
+                <button
+                  className="btn sm"
+                  type="button"
+                  onClick={() => handleActivate(p.id)}
+                  disabled={activating !== null || !bothTrained}
+                  title={!bothTrained ? "Profile must be fully trained before activating" : undefined}
+                >
+                  {activating === p.id ? "Activating…" : "Set live"}
+                </button>
+              )}
+            </div>
+          );
+        })}
+
+        {profiles.length > 0 && (
+          <div style={{ marginTop: 4, fontSize: 11, color: "var(--text-mute)", fontFamily: "var(--mono)" }}>
+            Only fully trained profiles can be set live. Train models in the Model Training page.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

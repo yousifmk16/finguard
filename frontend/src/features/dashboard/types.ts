@@ -69,4 +69,5 @@ export interface PipelineHealth {
     emitter: PipelineComponentStatus;
   };
   metrics: DetectionMetrics;
+  lag_p95_ms: number | null;
 }

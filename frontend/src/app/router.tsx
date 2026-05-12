@@ -10,7 +10,7 @@ import AlertCenterPage from "@/features/alerts/AlertCenterPage";
 import PoliciesPage from "@/features/policies/PoliciesPage";
 import UsersPage from "@/features/users/UsersPage";
 import SettingsPage from "@/features/settings/SettingsPage";
-import DataGenPage from "@/features/datagen/DataGenPage";
+import ModelTrainingPage from "@/features/training/ModelTrainingPage";
 import ForbiddenPage from "@/features/errors/ForbiddenPage";
 import NotFoundPage from "@/features/errors/NotFoundPage";
 
@@ -42,11 +42,12 @@ export default function AppRouter() {
             </AdminRoute>
           }
         />
+        <Route path="/datagen" element={<Navigate to="/model-training" replace />} />
         <Route
-          path="/datagen"
+          path="/model-training"
           element={
             <AdminRoute>
-              <DataGenPage />
+              <ModelTrainingPage />
             </AdminRoute>
           }
         />

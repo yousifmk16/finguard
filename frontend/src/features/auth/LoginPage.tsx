@@ -23,7 +23,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
 
   // sign-in state
-  const [email, setEmail] = useState("yousif.k@acme.io");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

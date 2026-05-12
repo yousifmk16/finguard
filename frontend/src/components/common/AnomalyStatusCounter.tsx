@@ -3,6 +3,7 @@ interface AnomalyStatusCounterProps {
   acknowledged: number;
   resolved: number;
   suppressed: number;
+  compact?: boolean;
 }
 
 const STATUSES = [
@@ -12,7 +13,7 @@ const STATUSES = [
   { key: "suppressed",   label: "Suppressed",    dotClass: "status suppressed" },
 ] as const;
 
-export default function AnomalyStatusCounter({ open, acknowledged, resolved, suppressed }: AnomalyStatusCounterProps) {
+export default function AnomalyStatusCounter({ open, acknowledged, resolved, suppressed, compact }: AnomalyStatusCounterProps) {
   const counts: Record<string, number> = { open, acknowledged, resolved, suppressed };
 
   return (
@@ -30,20 +31,20 @@ export default function AnomalyStatusCounter({ open, acknowledged, resolved, sup
           key={s.key}
           style={{
             flex: 1,
-            padding: "12px 16px",
+            padding: compact ? "8px 12px" : "12px 16px",
             borderRight: i < STATUSES.length - 1 ? "1px solid var(--border)" : undefined,
             display: "flex",
-            flexDirection: "column",
-            gap: 6,
+            flexDirection: compact ? "row" : "column",
+            alignItems: compact ? "center" : undefined,
+            justifyContent: compact ? "space-between" : undefined,
+            gap: compact ? 8 : 6,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span className={`${s.dotClass}`} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-mute)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              <span className="stat-dot" />
-              {s.label}
-            </span>
-          </div>
-          <div style={{ fontFamily: "var(--mono)", fontSize: 22, fontWeight: 600, color: "var(--text-1)", lineHeight: 1 }}>
+          <span className={`${s.dotClass}`} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10.5, color: "var(--text-mute)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <span className="stat-dot" />
+            {s.label}
+          </span>
+          <div style={{ fontFamily: "var(--mono)", fontSize: compact ? 13 : 22, fontWeight: 600, color: "var(--text-1)", lineHeight: 1 }}>
             {counts[s.key].toLocaleString()}
           </div>
         </div>

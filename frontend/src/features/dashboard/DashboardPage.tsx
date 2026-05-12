@@ -161,13 +161,6 @@ export default function DashboardPage() {
         />
       </div>
 
-      <AnomalyStatusCounter
-        open={kpi?.open_count ?? 0}
-        acknowledged={kpi?.acknowledged_count ?? 0}
-        resolved={kpi?.resolved_count ?? 0}
-        suppressed={kpi?.suppressed_count ?? 0}
-      />
-
       <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 14, marginBottom: 14 }}>
         <div className="card">
           <div className="card-header">
@@ -271,6 +264,14 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      <AnomalyStatusCounter
+        open={kpi?.open_count ?? 0}
+        acknowledged={kpi?.acknowledged_count ?? 0}
+        resolved={kpi?.resolved_count ?? 0}
+        suppressed={kpi?.suppressed_count ?? 0}
+        compact
+      />
     </div>
   );
 }

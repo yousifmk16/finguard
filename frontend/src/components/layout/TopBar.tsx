@@ -19,10 +19,16 @@ export default function TopBar({ onToggleSidebar }: TopBarProps) {
     return () => clearInterval(i);
   }, []);
 
-  const t = new Date(now);
   const pad = (n: number) => String(n).padStart(2, "0");
-  const clock = `${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}:${pad(t.getUTCSeconds())} UTC`;
-  const date = `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}`;
+  const riyadh = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Riyadh",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(now));
+  const p = Object.fromEntries(riyadh.map(({ type, value }) => [type, value]));
+  const clock = `${p.hour}:${p.minute}:${p.second} GMT+3`;
+  const date = `${p.year}-${p.month}-${p.day}`;
 
   const initials = session?.user?.email
     ? session.user.email.slice(0, 2).toUpperCase()
@@ -42,9 +48,6 @@ export default function TopBar({ onToggleSidebar }: TopBarProps) {
       <div className="topbar-center">
         <button className="tb-btn" onClick={onToggleSidebar} type="button">
           <Icon name="menu" size={14} />
-        </button>
-        <button className="tb-btn" type="button">
-          <Icon name="search" size={14} /> Search <span className="kbd">Ctrl+K</span>
         </button>
         <span className="tb-divider" />
         <span className="live-pill">
@@ -71,9 +74,6 @@ export default function TopBar({ onToggleSidebar }: TopBarProps) {
         )}
         <button className="tb-btn" type="button" onClick={() => navigate("/alerts")}>
           <Icon name="bell" size={14} />
-        </button>
-        <button className="tb-btn" type="button">
-          <Icon name="logs" size={14} />
         </button>
         <span className="tb-divider" />
         <button className="user-chip" type="button" onClick={handleLogout} title="Sign out">

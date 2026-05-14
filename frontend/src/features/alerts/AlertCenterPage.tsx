@@ -90,12 +90,6 @@ export default function AlertCenterPage() {
             Delivery records · dedup window <span className="mono">15m</span> · cooldown <span className="mono">5m</span>
           </div>
         </div>
-        <div className="page-actions">
-          <button className="btn" type="button">Channels</button>
-          <button className="btn primary" type="button" onClick={reload} disabled={loading}>
-            Test alert
-          </button>
-        </div>
       </div>
 
       {/* KPI tiles */}
